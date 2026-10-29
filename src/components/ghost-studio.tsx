@@ -6,8 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { streamImage } from "@/lib/stream-image";
 import { generateGhostVideo, pollGhostVideo } from "@/lib/ghost-media.functions";
 
-type Media = { id: string; kind: string; prompt: string; path: string | null; status: string; error: string | null; src?: string };
-export function GhostStudio({ userId, onSignIn, initialMode = "image" }: { userId?: string; onSignIn: () => void; initialMode?: "image" | "video" }) {
+type Media = { id: string; kind: string; prompt: string; path: string | null; status: string; error: string | null; src?: string | undefined };
+export function GhostStudio({ userId, onSignIn, initialMode = "image" }: { userId?: string | undefined; onSignIn: () => void; initialMode?: "image" | "video" }) {
   const [mode, setMode] = useState<"image" | "edit" | "video">(initialMode);
   const [prompt, setPrompt] = useState("");
   const [size, setSize] = useState("1024x1024");
@@ -83,7 +83,7 @@ export function GhostStudio({ userId, onSignIn, initialMode = "image" }: { userI
       await streamImage("/api/images", input, (src, isFinal) => { setPreview(src); setFinal(isFinal); if (isFinal) completed = src; }, undefined, { Authorization: `Bearer ${data.session?.access_token ?? ""}` });
       if (completed) await saveImage(completed);
     } catch (error) { setNote(error instanceof Error ? error.message : "Creation failed."); setFinal(false); }
-    finally { if (mode !== "video") setBusy(false); else setBusy(false); }
+    finally { setBusy(false); }
   }
   async function download(src: string, kind: string) {
     const blob = await (await fetch(src)).blob(); const url = URL.createObjectURL(blob);

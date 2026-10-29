@@ -339,10 +339,7 @@ export function bindLiveConnection(
   }
 
   function requestGreeting() {
-    const content = (
-      `Begin with this greeting in ${language.name}: ${language.greeting} Then listen.` ??
-      "Start the conversation now in your configured language and role. Give a brief greeting suited to this app's purpose, ask one relevant opening question, then listen."
-    ).trim();
+    const content = `Begin with this greeting in ${language.name}: ${language.greeting} Then listen.`;
     if (!content || !browserReady || !sessionID || greetingRequested || closing) return;
     greetingRequested = true;
     if (new TextEncoder().encode(content).length > 480) {
