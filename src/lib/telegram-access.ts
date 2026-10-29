@@ -1,14 +1,11 @@
-// Allow-list entries are comma/space separated Telegram IDs or phone numbers (e.g. "123456789, +251911234567").
-export function normalizePhone(p: string) {
-  return p.replace(/\D/g, "");
-}
-
-export function isAllowedTelegramUser(list: string, telegramId: number, phone?: string | null) {
-  const entries = list.split(/[\s,;]+/).filter(Boolean);
-  const digits = phone ? normalizePhone(phone) : "";
-  return entries.some((e) => {
-    if (e === String(telegramId)) return true;
-    const d = normalizePhone(e).replace(/^0+/, "");
-    return !!digits && d.length >= 7 && digits.endsWith(d);
-  });
+// Only Telegram-authenticated private messages identify a user. Never trust a
+// contact card, typed ID, username, or a group chat as the caller's identity.
+export function telegramUserId(message: {
+  chat?: { id?: number; type?: string };
+  from?: { id?: number; is_bot?: boolean };
+}): number | null {
+  const id = message.from?.id;
+  if (typeof id !== "number" || !Number.isSafeInteger(id) || id <= 0) return null;
+  if (message.from?.is_bot || message.chat?.type !== "private" || message.chat.id !== id) return null;
+  return id;
 }

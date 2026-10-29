@@ -218,6 +218,21 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_users: {
+        Row: {
+          created_at: string
+          telegram_id: number
+        }
+        Insert: {
+          created_at?: string
+          telegram_id: number
+        }
+        Update: {
+          created_at?: string
+          telegram_id?: number
+        }
+        Relationships: []
+      }
       telegram_verified: {
         Row: {
           created_at: string

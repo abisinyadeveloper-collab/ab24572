@@ -1,13 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { isAllowedTelegramUser } from "./telegram-access";
+import { telegramUserId } from "./telegram-access";
 
-const list = "123456789, +251911234567";
-
-describe("telegram allow-list", () => {
-  it("allows a listed Telegram ID", () => expect(isAllowedTelegramUser(list, 123456789)).toBe(true));
-  it("refuses an unlisted ID with no phone", () => expect(isAllowedTelegramUser(list, 42)).toBe(false));
-  it("allows a listed phone", () => expect(isAllowedTelegramUser(list, 42, "251911234567")).toBe(true));
-  it("matches local 09 format against international", () => expect(isAllowedTelegramUser("0911234567", 42, "+251911234567")).toBe(true));
-  it("refuses an unlisted phone", () => expect(isAllowedTelegramUser(list, 42, "+251900000000")).toBe(false));
-  it("refuses everyone when the list is empty", () => expect(isAllowedTelegramUser("", 123456789, "+251911234567")).toBe(false));
+const privateMessage = (id: number) => ({ chat: { id, type: "private" }, from: { id } });
+describe("public Telegram identity", () => {
+  it("allows any real sender without a phone or allowlist", () => {
+    expect(telegramUserId(privateMessage(42))).toBe(42);
+    expect(telegramUserId(privateMessage(987654321))).toBe(987654321);
+  });
+  it("keeps different users under different IDs", () => {
+    expect(telegramUserId(privateMessage(42))).not.toBe(telegramUserId(privateMessage(43)));
+  });
+  it("rejects messages without sender identity", () => expect(telegramUserId({ chat: { id: 42, type: "private" } })).toBeNull());
+  it("rejects a chat belonging to another ID", () => expect(telegramUserId({ chat: { id: 43, type: "private" }, from: { id: 42 } })).toBeNull());
+  it("rejects group access", () => expect(telegramUserId({ chat: { id: -42, type: "group" }, from: { id: 42 } })).toBeNull());
+  it("rejects bot senders", () => expect(telegramUserId({ ...privateMessage(42), from: { id: 42, is_bot: true } })).toBeNull());
+  it("rejects invalid IDs", () => {
+    for (const id of [0, -1, 1.5, NaN, Number.MAX_SAFE_INTEGER + 1]) expect(telegramUserId(privateMessage(id))).toBeNull();
+  });
 });

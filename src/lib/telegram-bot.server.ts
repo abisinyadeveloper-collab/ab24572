@@ -2,7 +2,7 @@ import { createHash, timingSafeEqual } from "crypto";
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import { GHOST_MODELS, ghostInstructions } from "./ghost";
-import { isAllowedTelegramUser, normalizePhone } from "./telegram-access";
+import { telegramUserId } from "./telegram-access";
 
 const TG = "https://connector-gateway.lovable.dev/telegram";
 
@@ -26,12 +26,18 @@ async function tg(method: string, body: unknown) {
     },
     body: JSON.stringify(body),
   });
-  if (!res.ok) console.error(`Telegram ${method} failed [${res.status}]: ${await res.text()}`);
+  if (!res.ok) {
+    const body = await res.text();
+    console.error(`Telegram ${method} failed [${res.status}]: ${body}`);
+    throw new Error(`Telegram request failed [${res.status}]: ${body}`);
+  }
+  const data = await res.json() as { ok?: boolean; description?: string };
+  if (!data.ok) throw new Error(`Telegram ${method} failed: ${data.description ?? "Unknown error"}`);
 }
 
 type Msg = {
   chat: { id: number; type: string };
-  from?: { id: number };
+  from?: { id: number; is_bot?: boolean };
   text?: string;
   contact?: { phone_number: string; user_id?: number };
 };
@@ -45,35 +51,21 @@ export async function handleTelegramWebhook(request: Request) {
 
   const update = (await request.json()) as { update_id?: number; message?: Msg };
   const msg = update.message;
-  if (typeof update.update_id !== "number" || !msg?.from || msg.chat.type !== "private") return Response.json({ ok: true });
+  const userId = msg ? telegramUserId(msg) : null;
+  if (!Number.isSafeInteger(update.update_id) || !msg || userId === null || typeof update.update_id !== "number") return Response.json({ ok: true });
 
   const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
   // Telegram retries deliveries; skip duplicates.
   const { error: dup } = await db.from("telegram_updates").insert({ update_id: update.update_id });
-  if (dup) return Response.json({ ok: true });
+  if (dup?.code === "23505") return Response.json({ ok: true });
+  if (dup) return Response.json({ error: dup.message }, { status: 500 });
 
-  const chatId = msg.chat.id;
-  const userId = msg.from.id;
-  const list = process.env["TELEGRAM_ALLOWED_USERS"] ?? "";
+  const chatId = userId;
+  const { error: registrationError } = await db.from("telegram_users").upsert({ telegram_id: userId }, { onConflict: "telegram_id", ignoreDuplicates: true });
+  if (registrationError) return Response.json({ error: registrationError.message }, { status: 500 });
 
-  // Phone check: only accept the sender's own shared contact.
   if (msg.contact) {
-    if (msg.contact.user_id === userId && isAllowedTelegramUser(list, userId, msg.contact.phone_number)) {
-      await db.from("telegram_verified").upsert({ telegram_id: userId, phone: normalizePhone(msg.contact.phone_number) });
-      await tg("sendMessage", { chat_id: chatId, text: "✅ Verified. Ask Ghost anything.", reply_markup: { remove_keyboard: true } });
-    } else {
-      await tg("sendMessage", { chat_id: chatId, text: "Sorry, this number isn't allowed to use Ghost.", reply_markup: { remove_keyboard: true } });
-    }
-    return Response.json({ ok: true });
-  }
-
-  const { data: verified } = await db.from("telegram_verified").select("phone").eq("telegram_id", userId).maybeSingle();
-  if (!isAllowedTelegramUser(list, userId, verified?.phone)) {
-    await tg("sendMessage", {
-      chat_id: chatId,
-      text: `👻 Ghost is private. Share your phone number to check access.\nYour Telegram ID: ${userId}`,
-      reply_markup: { keyboard: [[{ text: "📱 Share my number", request_contact: true }]], resize_keyboard: true, one_time_keyboard: true },
-    });
+    await tg("sendMessage", { chat_id: chatId, text: "No phone number is needed. Your Telegram account is ready — ask Ghost anything.", reply_markup: { remove_keyboard: true } });
     return Response.json({ ok: true });
   }
 
@@ -83,7 +75,7 @@ export async function handleTelegramWebhook(request: Request) {
     return Response.json({ ok: true });
   }
   if (text === "/start") {
-    await tg("sendMessage", { chat_id: chatId, text: "👻 Hi, I'm Ghost. Ask me anything." });
+    await tg("sendMessage", { chat_id: chatId, text: `👻 Hi, I'm Ghost. You're signed in with your Telegram account.\nYour Telegram ID: ${userId}\nAsk me anything, or use /new for a fresh chat.`, reply_markup: { remove_keyboard: true } });
     return Response.json({ ok: true });
   }
   if (text === "/new") {
