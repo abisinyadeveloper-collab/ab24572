@@ -187,14 +187,18 @@ export async function handleGhostChat(request: Request) {
             toolsUsed.push("media.image");
             modelsUsed.push(MEDIA_MODELS.image);
             writer.write({ type: "data-media", data: { kind: "image", path, prompt: media.prompt } });
-            writer.write({ type: "text", text: "Here is the image you asked for — it is also saved in your library." });
+            writer.write({ type: "text-start", id: "media-note" });
+            writer.write({ type: "text-delta", id: "media-note", delta: "Here is the image you asked for — it is also saved in your library." });
+            writer.write({ type: "text-end", id: "media-note" });
             return;
           }
           const job = await startGhostVideo(userId, media.prompt, "1080p", "5s", "16:9");
           toolsUsed.push("media.video");
           modelsUsed.push(MEDIA_MODELS.video);
           writer.write({ type: "data-media", data: { kind: "video", id: job.id, prompt: media.prompt } });
-          writer.write({ type: "text", text: "Your video is generating. I will add it to your library as soon as it is ready." });
+          writer.write({ type: "text-start", id: "media-note" });
+          writer.write({ type: "text-delta", id: "media-note", delta: "Your video is generating. I will add it to your library as soon as it is ready." });
+          writer.write({ type: "text-end", id: "media-note" });
           return;
         }
         if (auto)
