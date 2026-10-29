@@ -1,0 +1,10 @@
+CREATE TABLE public.ghost_media (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id uuid NOT NULL, kind text NOT NULL CHECK (kind IN ('image','video')), prompt text NOT NULL, path text, gateway_id text, status text NOT NULL DEFAULT 'completed' CHECK (status IN ('queued','in_progress','completed','failed')), error text, created_at timestamptz NOT NULL DEFAULT now());
+GRANT SELECT, INSERT, DELETE ON public.ghost_media TO authenticated;
+GRANT ALL ON public.ghost_media TO service_role;
+ALTER TABLE public.ghost_media ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Owners read their media" ON public.ghost_media FOR SELECT TO authenticated USING (user_id = auth.uid());
+CREATE POLICY "Owners save images" ON public.ghost_media FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid() AND kind = 'image' AND gateway_id IS NULL AND path LIKE auth.uid()::text || '/%' AND status = 'completed');
+CREATE POLICY "Owners delete media" ON public.ghost_media FOR DELETE TO authenticated USING (user_id = auth.uid());
+CREATE POLICY "Owners read Ghost files" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'ghost-media' AND (storage.foldername(name))[1] = auth.uid()::text);
+CREATE POLICY "Owners upload Ghost files" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'ghost-media' AND (storage.foldername(name))[1] = auth.uid()::text);
+CREATE POLICY "Owners delete Ghost files" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'ghost-media' AND (storage.foldername(name))[1] = auth.uid()::text);
