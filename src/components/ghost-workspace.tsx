@@ -827,6 +827,8 @@ function GhostChat({
                       <summary>Reasoning summary</summary>
                       <MessageResponse>{p.text}</MessageResponse>
                     </details>
+                  ) : p.type === "data-media" ? (
+                    <ChatMedia key={i} media={p.data as ChatMediaData} />
                   ) : null,
                 )}
               </MessageContent>
@@ -870,10 +872,11 @@ function GhostChat({
               <select
                 aria-label="Agent perspective"
                 value={agent}
-                onChange={(e) => onAgentChange(e.target.value as AgentId)}
+                onChange={(e) => onAgentChange(e.target.value as AgentChoice)}
                 disabled={busy}
                 className="bg-card text-foreground outline-none"
               >
+                <option value="auto">{AUTO_AGENT.name}</option>
                 {agents.map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.name}
