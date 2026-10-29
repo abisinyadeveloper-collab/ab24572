@@ -13,10 +13,13 @@ import "@lovable.dev/cloud-auth-js/styles.css";
 export function GhostAuth({
   open,
   onOpenChange,
+  next,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  next?: string;
 }) {
+  const returnUrl = () => (next ? new URL(next, window.location.origin).href : window.location.origin);
   const [mode, setMode] = useState<"login" | "signup" | "reset">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,7 +40,7 @@ export function GhostAuth({
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin },
+          options: { emailRedirectTo: returnUrl() },
         });
         if (error) throw error;
         setNotice("Check your email to confirm your account, then sign in.");
@@ -55,7 +58,7 @@ export function GhostAuth({
   async function social(provider: "google" | "lovable") {
     setNotice("");
     const result = await lovable.auth.signInWithOAuth(provider, {
-      redirect_uri: window.location.origin,
+      redirect_uri: returnUrl(),
     });
     if (result.error) setNotice(result.error.message);
     else if (!result.redirected) onOpenChange(false);
