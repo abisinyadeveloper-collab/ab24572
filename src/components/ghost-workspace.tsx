@@ -277,7 +277,7 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
             <span className="font-mono text-xs">+</span>
           </Button>
           <div>
-            <p className="side-label">WORKSPACE</p>
+            <p className="side-label">Workspace</p>
             <nav className="side-nav">
               <Button variant="ghost" className={`nav-item ${view === "chat" ? "active" : ""}`} asChild>
                 <Link to="/" onClick={() => { setMobileOpen(false); setView("chat"); }}>
@@ -304,7 +304,7 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
             </nav>
           </div>
           <div className="sidebar-history">
-            <p className="side-label">RECENT CONVERSATIONS</p>
+            <p className="side-label">Recent</p>
             {threads.length ? (
               threads.map((t) => (
                 <div className="history-row" key={t.id}>
