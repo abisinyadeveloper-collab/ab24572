@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      ghost_activity: {
+        Row: {
+          created_at: string
+          duration_ms: number
+          id: string
+          input_tokens: number | null
+          models: string[]
+          ok: boolean
+          output_tokens: number | null
+          source: string
+          thread_id: string | null
+          tier: string
+          tools: string[]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_ms?: number
+          id?: string
+          input_tokens?: number | null
+          models?: string[]
+          ok?: boolean
+          output_tokens?: number | null
+          source?: string
+          thread_id?: string | null
+          tier: string
+          tools?: string[]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number
+          id?: string
+          input_tokens?: number | null
+          models?: string[]
+          ok?: boolean
+          output_tokens?: number | null
+          source?: string
+          thread_id?: string | null
+          tier?: string
+          tools?: string[]
+          user_id?: string
+        }
+        Relationships: []
+      }
       ghost_ai_blocks: {
         Row: {
           created_at: string
@@ -67,6 +112,27 @@ export type Database = {
           path?: string | null
           prompt?: string
           status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ghost_memories: {
+        Row: {
+          created_at: string
+          fact: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fact: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fact?: string
+          id?: string
           user_id?: string
         }
         Relationships: []
