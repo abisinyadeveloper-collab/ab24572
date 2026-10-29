@@ -1,0 +1,10 @@
+create table public.telegram_updates (update_id bigint primary key, created_at timestamptz not null default now());
+create table public.telegram_verified (telegram_id bigint primary key, phone text not null, created_at timestamptz not null default now());
+create table public.telegram_history (id bigserial primary key, chat_id bigint not null, role text not null check (role in ('user','assistant')), content text not null, created_at timestamptz not null default now());
+create index telegram_history_chat_idx on public.telegram_history (chat_id, created_at desc);
+alter table public.telegram_updates enable row level security;
+alter table public.telegram_verified enable row level security;
+alter table public.telegram_history enable row level security;
+revoke all on public.telegram_updates, public.telegram_verified, public.telegram_history from anon, authenticated;
+grant all on public.telegram_updates, public.telegram_verified, public.telegram_history to service_role;
+grant usage, select on sequence public.telegram_history_id_seq to service_role;

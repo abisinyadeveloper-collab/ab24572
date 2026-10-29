@@ -179,6 +179,63 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_history: {
+        Row: {
+          chat_id: number
+          content: string
+          created_at: string
+          id: number
+          role: string
+        }
+        Insert: {
+          chat_id: number
+          content: string
+          created_at?: string
+          id?: number
+          role: string
+        }
+        Update: {
+          chat_id?: number
+          content?: string
+          created_at?: string
+          id?: number
+          role?: string
+        }
+        Relationships: []
+      }
+      telegram_updates: {
+        Row: {
+          created_at: string
+          update_id: number
+        }
+        Insert: {
+          created_at?: string
+          update_id: number
+        }
+        Update: {
+          created_at?: string
+          update_id?: number
+        }
+        Relationships: []
+      }
+      telegram_verified: {
+        Row: {
+          created_at: string
+          phone: string
+          telegram_id: number
+        }
+        Insert: {
+          created_at?: string
+          phone: string
+          telegram_id: number
+        }
+        Update: {
+          created_at?: string
+          phone?: string
+          telegram_id?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
