@@ -54,7 +54,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { GhostAuth } from "./ghost-auth";
 import { GhostVoiceDialog } from "./ghost-voice";
 import { Mic as MicIcon } from "lucide-react";
-import { agents, type AgentId } from "@/lib/ghost";
+import { agents, tiers, type AgentId, type TierId } from "@/lib/ghost";
 import ghostMark from "@/assets/ghost-emblem.jpg";
 
 type Thread = { id: string; title: string; updated_at: string };
@@ -719,13 +719,18 @@ function GhostChat({
 }) {
   const [text, setText] = useState("");
   const [phase, setPhase] = useState("");
+  const [tier, setTier] = useState<TierId>("ghost");
+  useEffect(() => {
+    const saved = window.localStorage.getItem("ghost-tier");
+    if (saved && tiers.some((t) => t.id === saved)) setTier(saved as TierId);
+  }, []);
   const textarea = useRef<HTMLTextAreaElement>(null);
   const started = useRef(false);
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: "/api/chat",
-        body: { threadId, agent },
+        body: { threadId, agent, tier },
         headers: async () => {
           const { data } = await supabase.auth.getSession();
           return { Authorization: `Bearer ${data.session?.access_token || ""}` };
@@ -736,6 +741,7 @@ function GhostChat({
             ...rest.body,
             threadId,
             agent,
+            tier,
             messages: messages.map((m) => ({
               id: m.id,
               role: m.role,
@@ -859,7 +865,23 @@ function GhostChat({
                   </option>
                 ))}
               </select>
-              <span>·</span>Ghost collective
+              <span>·</span>
+              <select
+                aria-label="Ghost model"
+                value={tier}
+                onChange={(e) => {
+                  setTier(e.target.value as TierId);
+                  window.localStorage.setItem("ghost-tier", e.target.value);
+                }}
+                disabled={busy}
+                className="bg-card text-foreground outline-none"
+              >
+                {tiers.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} — {t.label}
+                  </option>
+                ))}
+              </select>
             </label>
             <PromptInputSubmit
               status={status}

@@ -2,6 +2,16 @@ export const GHOST_MODELS = {
   draft: "openai/gpt-6-astra",
   synthesis: "anthropic/claude-fable-5-1",
 } as const;
+// Three Ghost tiers: Lite (fast), Ayna (balanced), Ghost (most powerful, two-model workflow).
+export const tiers = [
+  { id: "lite", name: "Lite", label: "Fast answers", effort: "low", synthesize: false },
+  { id: "ayna", name: "Ayna", label: "Balanced reasoning", effort: "medium", synthesize: false },
+  { id: "ghost", name: "Ghost", label: "Most powerful · Astra + Fable", effort: "high", synthesize: true },
+] as const;
+export type TierId = (typeof tiers)[number]["id"];
+export function getTier(id: string | undefined) {
+  return tiers.find((t) => t.id === id) ?? tiers[2];
+}
 export const agents = [
   {
     id: "architect",
