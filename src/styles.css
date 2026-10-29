@@ -949,3 +949,12 @@ body, .ghost-app, .workspace { background: var(--background); color: var(--foreg
 @keyframes orb-ripple { from { opacity: .7; transform: scale(.9); } to { opacity: 0; transform: scale(1.55); } }
 @keyframes orb-swirl { 0%,100% { transform: scale(.9) rotate(0); border-radius: 50%; } 50% { transform: scale(.96) rotate(180deg); border-radius: 44% 56% 52% 48%; } }
 @media (prefers-reduced-motion: reduce) { .voice-presence * { animation: none !important; } }
+
+.permissions-box ul { gap: .25rem; }
+.perm-row { display: flex; align-items: center; gap: .75rem; padding: .5rem 0; }
+.perm-text { flex: 1; display: flex; flex-direction: column; line-height: 1.3; }
+.perm-text small { color: var(--muted-foreground); font-size: .78rem; }
+.perm-ok { font-size: .8rem; color: var(--primary); font-weight: 600; }
+.chat-attachment { display: flex; align-items: center; gap: .5rem; padding: .35rem; }
+.chat-attachment img { width: 56px; height: 56px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border); }
+.chat-image { max-width: 260px; border-radius: 16px; border: 1px solid var(--border); }
