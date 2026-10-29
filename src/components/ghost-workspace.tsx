@@ -129,10 +129,22 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
       .select("display_name,avatar_url")
       .eq("id", user.id)
       .maybeSingle()
-      .then(({ data }) => {
-        if (live) {
-          setDisplayName(data?.display_name || "");
-          setAvatarUrl(data?.avatar_url || "");
+      .then(async ({ data }) => {
+        if (!live) return;
+        setDisplayName(data?.display_name || "");
+        const stored = data?.avatar_url || "";
+        if (stored.startsWith("avatars:")) {
+          const path = stored.slice("avatars:".length);
+          setAvatarPath(path);
+          setAvatarUrl("");
+          const { data: signed } = await supabase.storage
+            .from("avatars")
+            .createSignedUrl(path, 60 * 60);
+          if (live) setAvatarSrc(signed?.signedUrl || "");
+        } else {
+          setAvatarPath("");
+          setAvatarUrl(stored);
+          setAvatarSrc(stored);
         }
       });
     if (threadId)
