@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useLiveVoice, type LiveEvent } from "@/hooks/use-live-voice";
-import { voiceLanguages } from "@/lib/ghost-media";
+import { voiceLanguages, detectVoiceLanguage } from "@/lib/ghost-media";
 
 type Line = { role: "user" | "assistant"; text: string };
 
@@ -18,7 +18,7 @@ const statusLabel: Record<string, string> = {
 
 function VoiceCall() {
   const [token, setToken] = useState("");
-  const [language, setLanguage] = useState("am");
+  const [language, setLanguage] = useState(detectVoiceLanguage);
   const [lines, setLines] = useState<Line[]>([]);
   const last = useRef<"user" | "assistant" | null>(null);
 
