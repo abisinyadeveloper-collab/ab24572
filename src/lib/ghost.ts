@@ -77,6 +77,27 @@ export const agents = [
   },
 ] as const;
 export type AgentId = (typeof agents)[number]["id"];
+// "Auto" lets Ghost pick the agent perspective from the question itself.
+export const AUTO_AGENT = { id: "auto", name: "Auto", label: "Ghost picks the best agent" } as const;
+export type AgentChoice = AgentId | "auto";
+export function pickAgent(text: string): AgentId {
+  const t = text.toLowerCase();
+  if (/\b(security|vulnerab|threat|attack|harden|exploit|breach|defend)\b/.test(t)) return "defender";
+  if (/\b(code|typescript|javascript|python|react|sql|api|bug|compile|deploy|debug|refactor|function)\b/.test(t)) return "coder";
+  if (/\b(review|audit|correct|maintainab|quality|test coverage)\b/.test(t)) return "reviewer";
+  if (/\b(decide|decision|trade-?offs?|choose|which option|should i|prioriti[sz]e)\b/.test(t)) return "arbiter";
+  if (/\b(research|analy[sz]e|analysis|evidence|study|compare|explain|why|how does)\b/.test(t)) return "researcher";
+  return "architect";
+}
+// Media requests inside chat: the question itself decides whether Ghost creates an image or a video.
+export type MediaIntent = { kind: "image" | "video"; prompt: string };
+export function detectMediaIntent(text: string): MediaIntent | null {
+  const t = text.trim();
+  if (!/\b(generate|create|make|draw|design|render|produce|paint|imagine|show me)\b/i.test(t)) return null;
+  if (/\b(video|clip|animation|animated|footage|movie|short film)\b/i.test(t)) return { kind: "video", prompt: t };
+  if (/\b(image|picture|photo|artwork|art|drawing|illustration|logo|poster|wallpaper|portrait|diagram)\b/i.test(t)) return { kind: "image", prompt: t };
+  return null;
+}
 export function ownsThread(owner: string, user: string) {
   return owner === user;
 }
