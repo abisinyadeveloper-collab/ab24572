@@ -20,3 +20,4 @@
 - Chat, image studio, and video studio each have a content route and unique metadata; the shared workspace preserves consistent account navigation.
 - Auto tier and memory extraction are deterministic rules in src/lib/ghost.ts (no extra model call), so routing is free, fast and testable.
 - Memories and activity rows are owner-scoped tables written with the caller's own token (chat and voice relay), never the admin client.
+- External AI clients connect via the app MCP server in src/lib/mcp (OAuth via managed auth, caller-scoped client) so tools always act as the signed-in user under RLS.
