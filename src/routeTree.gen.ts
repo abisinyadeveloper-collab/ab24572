@@ -10,7 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ImagesRouteImport } from './routes/images'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as VideosRouteImport } from './routes/videos'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiImagesRouteImport } from './routes/api/images'
 import { Route as ChatThreadIdRouteImport } from './routes/chat.$threadId'
@@ -20,9 +22,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ImagesRoute = ImagesRouteImport.update({
+  id: '/images',
+  path: '/images',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VideosRoute = VideosRouteImport.update({
+  id: '/videos',
+  path: '/videos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiChatRoute = ApiChatRouteImport.update({
@@ -43,14 +55,18 @@ const ChatThreadIdRoute = ChatThreadIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/images': typeof ImagesRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/videos': typeof VideosRoute
   '/api/chat': typeof ApiChatRoute
   '/api/images': typeof ApiImagesRoute
   '/chat/$threadId': typeof ChatThreadIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/images': typeof ImagesRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/videos': typeof VideosRoute
   '/api/chat': typeof ApiChatRoute
   '/api/images': typeof ApiImagesRoute
   '/chat/$threadId': typeof ChatThreadIdRoute
@@ -58,7 +74,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/images': typeof ImagesRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/videos': typeof VideosRoute
   '/api/chat': typeof ApiChatRoute
   '/api/images': typeof ApiImagesRoute
   '/chat/$threadId': typeof ChatThreadIdRoute
@@ -66,13 +84,28 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/reset-password' | '/api/chat' | '/api/images' | '/chat/$threadId'
+    | '/'
+    | '/images'
+    | '/reset-password'
+    | '/videos'
+    | '/api/chat'
+    | '/api/images'
+    | '/chat/$threadId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/reset-password' | '/api/chat' | '/api/images' | '/chat/$threadId'
+  to:
+    | '/'
+    | '/images'
+    | '/reset-password'
+    | '/videos'
+    | '/api/chat'
+    | '/api/images'
+    | '/chat/$threadId'
   id:
     | '__root__'
     | '/'
+    | '/images'
     | '/reset-password'
+    | '/videos'
     | '/api/chat'
     | '/api/images'
     | '/chat/$threadId'
@@ -80,7 +113,9 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ImagesRoute: typeof ImagesRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  VideosRoute: typeof VideosRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiImagesRoute: typeof ApiImagesRoute
   ChatThreadIdRoute: typeof ChatThreadIdRoute
@@ -95,11 +130,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/images': {
+      id: '/images'
+      path: '/images'
+      fullPath: '/images'
+      preLoaderRoute: typeof ImagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/videos': {
+      id: '/videos'
+      path: '/videos'
+      fullPath: '/videos'
+      preLoaderRoute: typeof VideosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/chat': {
@@ -128,7 +177,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ImagesRoute: ImagesRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  VideosRoute: VideosRoute,
   ApiChatRoute: ApiChatRoute,
   ApiImagesRoute: ApiImagesRoute,
   ChatThreadIdRoute: ChatThreadIdRoute,
