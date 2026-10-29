@@ -23,7 +23,7 @@ export function GhostPermissions() {
   const refresh = async () => {
     const entries = await Promise.all(rows.map(async (r) => [r.id, await queryPermission(r.id)] as const));
     const s = Object.fromEntries(entries);
-    if (typeof Notification !== "undefined") s.notifications = Notification.permission === "default" ? "prompt" : Notification.permission;
+    if (typeof Notification !== "undefined") s["notifications"] = Notification.permission === "default" ? "prompt" : Notification.permission;
     setStates(s);
   };
   useEffect(() => {

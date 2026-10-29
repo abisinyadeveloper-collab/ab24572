@@ -830,7 +830,7 @@ function GhostChat({
             messages: messages.map((m) => ({
               id: m.id,
               role: m.role,
-              parts: m.parts.flatMap((p) =>
+              parts: m.parts.flatMap((p): Array<Record<string, string>> =>
                 p.type === "text"
                   ? [{ type: "text", text: p.text }]
                   : p.type === "file" && p.mediaType.startsWith("image/") && p.url.startsWith("data:")
