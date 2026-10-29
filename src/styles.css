@@ -958,3 +958,14 @@ body, .ghost-app, .workspace { background: var(--background); color: var(--foreg
 .chat-attachment { display: flex; align-items: center; gap: .5rem; padding: .35rem; }
 .chat-attachment img { width: 56px; height: 56px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border); }
 .chat-image { max-width: 260px; border-radius: 16px; border: 1px solid var(--border); }
+
+.tools-sheet { border-radius: 2rem 2rem 0 0; padding: 0.75rem 1.25rem 1.5rem; max-height: 85vh; overflow-y: auto; }
+.tools-grab { width: 3rem; height: 0.3rem; border-radius: 999px; background: var(--muted-foreground); opacity: .5; margin: 0 auto 1rem; }
+.tools-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; margin-bottom: 1rem; }
+.tools-tiles button { display: flex; flex-direction: column; align-items: center; gap: .5rem; padding: 1.25rem .5rem; border-radius: 1.75rem; background: var(--muted); color: var(--foreground); font-size: 1rem; }
+.tools-tiles button:hover { background: var(--accent); }
+.tools-list { display: flex; flex-direction: column; }
+.tools-list button { display: flex; align-items: center; gap: 1.25rem; width: 100%; padding: .85rem .5rem; border-radius: 1rem; text-align: left; color: var(--foreground); }
+.tools-list button:hover { background: var(--muted); }
+.tools-list strong { display: block; font-weight: 500; font-size: 1.05rem; }
+.tools-list small { display: block; color: var(--muted-foreground); font-size: .9rem; }
