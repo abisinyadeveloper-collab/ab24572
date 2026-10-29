@@ -27,3 +27,4 @@
 - Telegram identities come only from secret-verified webhook sender IDs in matching private chats; register users server-side and scope all history by that ID to prevent cross-user access.
 - Telegram media uses separate sender-owned records and private storage, reuses the website's model settings and durable AI blocks, and collects videos only on explicit /status requests to avoid unattended paid jobs.
 - Uploaded Office documents are parsed as bounded text using pure-JavaScript ZIP/XML readers; PDFs and supported images use native model inputs, and unsupported binaries are rejected rather than executed.
+- Offline mode: vite-plugin-pwa generateSW writes /sw.js into dist/client, registered only via src/lib/pwa-register.ts (refuses dev/preview/iframes); chats and the send queue are cached per device in src/lib/offline-cache.ts, so the app opens and queues messages without internet.
