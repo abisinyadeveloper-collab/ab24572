@@ -194,6 +194,38 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
     if (id === threadId) await navigate({ to: "/" });
     else await refreshThreads();
   }
+  async function uploadAvatar(file: File) {
+    if (!user) return;
+    setProfileNote("");
+    if (!file.type.startsWith("image/")) {
+      setProfileNote("Choose an image file (PNG, JPG, or similar).");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setProfileNote("Images up to 2 MB are supported.");
+      return;
+    }
+    setAvatarUploading(true);
+    const ext = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "png";
+    const path = `${user.id}/avatar-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("avatars").upload(path, file, {
+      contentType: file.type,
+      upsert: true,
+    });
+    if (error) {
+      setAvatarUploading(false);
+      setProfileNote(error.message);
+      return;
+    }
+    const { data: signed } = await supabase.storage
+      .from("avatars")
+      .createSignedUrl(path, 60 * 60);
+    setAvatarPath(path);
+    setAvatarUrl("");
+    setAvatarSrc(signed?.signedUrl || "");
+    setAvatarUploading(false);
+    setProfileNote("Photo ready — save details to keep it.");
+  }
   async function saveProfile(e: React.FormEvent) {
     e.preventDefault();
     if (!user) return;
@@ -205,7 +237,7 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
     const { error } = await supabase.from("profiles").upsert({
       id: user.id,
       display_name: displayName.trim().slice(0, 60),
-      avatar_url: avatarUrl.trim(),
+      avatar_url: avatarPath ? `avatars:${avatarPath}` : avatarUrl.trim(),
     });
     setProfileNote(error ? error.message : "Account details saved.");
   }
