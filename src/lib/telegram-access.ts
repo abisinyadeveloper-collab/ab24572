@@ -4,16 +4,11 @@ export function normalizePhone(p: string) {
 }
 
 export function isAllowedTelegramUser(list: string, telegramId: number, phone?: string | null) {
-  const entries = list.split(/[\s,;]+/).map((e) => e.trim()).filter(Boolean);
-  const id = String(telegramId);
+  const entries = list.split(/[\s,;]+/).filter(Boolean);
   const digits = phone ? normalizePhone(phone) : "";
   return entries.some((e) => {
-    if (e.startsWith("+") || e.replace(/\D/g, "").length >= 9 && e.replace(/\D/g, "") !== e) {
-      const d = normalizePhone(e);
-      return !!digits && d.length >= 7 && (digits === d || digits.endsWith(d.replace(/^0+/, "")));
-    }
-    if (e === id) return true;
-    const d = normalizePhone(e);
-    return !!digits && d.length >= 7 && (digits === d || digits.endsWith(d.replace(/^0+/, "")));
+    if (e === String(telegramId)) return true;
+    const d = normalizePhone(e).replace(/^0+/, "");
+    return !!digits && d.length >= 7 && digits.endsWith(d);
   });
 }
