@@ -725,7 +725,7 @@ function StarterComposer({
       >
         {image && (
           <div className="chat-attachment">
-            <img src={image} alt="Attached" />
+            {image.startsWith("data:application/pdf") ? <span>PDF attached</span> : <img src={image} alt="Attached" />}
             <button type="button" aria-label="Remove attachment" onClick={() => setImage("")}><XIcon size={14} /></button>
           </div>
         )}
@@ -861,7 +861,7 @@ function GhostChat({
               parts: m.parts.flatMap((p): Array<Record<string, string>> =>
                 p.type === "text"
                   ? [{ type: "text", text: p.text }]
-                  : p.type === "file" && p.mediaType.startsWith("image/") && p.url.startsWith("data:")
+                  : p.type === "file" && (p.mediaType.startsWith("image/") || p.mediaType === "application/pdf") && p.url.startsWith("data:")
                     ? [{ type: "file", mediaType: p.mediaType, url: p.url }]
                     : [],
               ),
@@ -901,7 +901,7 @@ function GhostChat({
         sessionStorage.removeItem(`ghost-draft-${threadId}`);
         const img = sessionStorage.getItem(`ghost-draft-img-${threadId}`);
         sessionStorage.removeItem(`ghost-draft-img-${threadId}`);
-        void sendMessage({ text: draft, ...(img ? { files: [{ type: "file" as const, mediaType: "image/jpeg", url: img }] } : {}) });
+        void sendMessage({ text: draft, ...(img ? { files: [{ type: "file" as const, mediaType: img.startsWith("data:application/pdf") ? "application/pdf" : "image/jpeg", url: img }] } : {}) });
       }
     });
     return () => cancelAnimationFrame(frame);
@@ -972,13 +972,13 @@ function GhostChat({
             location.current = await currentLocation();
             await sendMessage({
               text: submitted.trim() || "What do you see in this image?",
-              ...(image ? { files: [{ type: "file" as const, mediaType: "image/jpeg", url: image }] } : {}),
+              ...(image ? { files: [{ type: "file" as const, mediaType: image.startsWith("data:application/pdf") ? "application/pdf" : "image/jpeg", url: image }] } : {}),
             });
           }}
         >
           {attachment && (
             <div className="chat-attachment">
-              <img src={attachment} alt="Image to send" />
+              {attachment.startsWith("data:application/pdf") ? <span>PDF attached</span> : <img src={attachment} alt="Image to send" />}
               <Button type="button" size="icon-sm" variant="ghost" aria-label="Remove image" onClick={() => setAttachment("")}><XIcon /></Button>
             </div>
           )}
