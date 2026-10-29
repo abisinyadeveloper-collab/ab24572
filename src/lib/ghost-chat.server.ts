@@ -146,10 +146,61 @@ export async function handleGhostChat(request: Request) {
     execute: async ({ writer }) => {
       try {
         const lastText = lastUserText;
+        // The question itself decides whether Ghost answers in text or creates media.
+        const media = detectMediaIntent(lastText);
+        if (media) {
+          writer.write({
+            type: "data-phase",
+            data: { label: media.kind === "image" ? "Creating your image" : "Starting your video" },
+            transient: true,
+          });
+          if (media.kind === "image") {
+            const key = await assertMediaAvailable(MEDIA_MODELS.image);
+            const upstream = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
+              method: "POST",
+              headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+              body: JSON.stringify({ model: MEDIA_MODELS.image, prompt: media.prompt, size: "1024x1024", quality: "high", stream: false }),
+            });
+            if (!upstream.ok) {
+              const error = await upstream.clone().json().catch(() => null);
+              const reason = error?.message ?? error?.error?.message ?? "Image creation is unavailable.";
+              await recordMediaBlock(MEDIA_MODELS.image, upstream.status, reason);
+              throw new Error(reason);
+            }
+            const payload = await upstream.json() as { data?: Array<{ b64_json?: string; url?: string }> };
+            const b64 = payload.data?.[0]?.b64_json;
+            const remoteUrl = payload.data?.[0]?.url;
+            if (!b64 && !remoteUrl) throw new Error("Image creation returned no picture.");
+            let bytes: Uint8Array | null = null;
+            if (b64) {
+              const bin = atob(b64);
+              bytes = new Uint8Array(bin.length);
+              for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            }
+            if (!bytes) bytes = new Uint8Array(await (await fetch(remoteUrl as string)).arrayBuffer());
+            const path = `${userId}/${crypto.randomUUID()}.png`;
+            const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+            const { error: uploadError } = await supabaseAdmin.storage.from("ghost-media").upload(path, bytes, { contentType: "image/png" });
+            if (uploadError) throw new Error("Image created, but saving it failed.");
+            const { error: rowError } = await db.from("ghost_media").insert({ user_id: userId, kind: "image", prompt: media.prompt, path });
+            if (rowError) throw new Error("Image created, but adding it to your library failed.");
+            toolsUsed.push("media.image");
+            modelsUsed.push(MEDIA_MODELS.image);
+            writer.write({ type: "data-media", data: { kind: "image", path, prompt: media.prompt } });
+            writer.write({ type: "text", text: "Here is the image you asked for — it is also saved in your library." });
+            return;
+          }
+          const job = await startGhostVideo(userId, media.prompt, "1080p", "5s", "16:9");
+          toolsUsed.push("media.video");
+          modelsUsed.push(MEDIA_MODELS.video);
+          writer.write({ type: "data-media", data: { kind: "video", id: job.id, prompt: media.prompt } });
+          writer.write({ type: "text", text: "Your video is generating. I will add it to your library as soon as it is ready." });
+          return;
+        }
         if (auto)
           writer.write({ type: "data-phase", data: { label: `Auto picked ${tier.name}` }, transient: true });
         let webInstructions = instructions;
-        if (wantsWeb(lastText, agent)) {
+        if (wantsWeb(lastText, agentChoice)) {
           writer.write({
             type: "data-phase",
             data: { label: "Searching the web and social posts" },
