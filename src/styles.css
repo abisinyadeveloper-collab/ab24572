@@ -3,7 +3,7 @@
 @source "../src";
 @custom-variant dark (&:is(.dark *));
 @theme inline {
-  --font-sans: "Manrope", sans-serif;
+  --font-sans: "Figtree", sans-serif;
   --font-mono: "IBM Plex Mono", monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -33,22 +33,24 @@
   --radius-xl: 8px;
 }
 :root {
-  --background: oklch(0.135 0.004 110);
-  --foreground: oklch(0.94 0.005 110);
-  --card: oklch(0.174 0.004 110);
-  --secondary: oklch(0.218 0.005 110);
-  --primary: oklch(0.87 0.21 125);
-  --primary-foreground: oklch(0.15 0.025 125);
-  --muted-foreground: oklch(0.63 0.008 110);
-  --accent: oklch(0.25 0.009 110);
-  --border: oklch(0.28 0.005 110);
-  --destructive: oklch(0.67 0.18 25);
-  --signal: oklch(0.76 0.13 163);
-  --sky: oklch(0.76 0.12 230);
-  --rose: oklch(0.75 0.13 350);
-  --radius: 6px;
-  --workspace-grid: oklch(0.25 0.005 110 / 0.28);
-  --panel-shadow: 0 20px 70px oklch(0.05 0 0 / 0.3);
+  --background: oklch(0.985 0.002 260);
+  --foreground: oklch(0.2 0.01 260);
+  --card: oklch(1 0 0);
+  --secondary: oklch(0.95 0.006 260);
+  --primary: oklch(0.55 0.2 262);
+  --primary-foreground: oklch(0.99 0 0);
+  --muted-foreground: oklch(0.48 0.015 260);
+  --accent: oklch(0.93 0.02 262);
+  --border: oklch(0.9 0.008 260);
+  --destructive: oklch(0.58 0.2 25);
+  --signal: oklch(0.6 0.15 155);
+  --sky: oklch(0.6 0.15 240);
+  --rose: oklch(0.62 0.18 350);
+  --radius: 16px;
+  --workspace-grid: transparent;
+  --panel-shadow: 0 12px 40px oklch(0.4 0.05 260 / 0.12);
+  --glow-bottom: radial-gradient(120% 70% at 50% 110%, oklch(0.78 0.11 275 / 0.55), oklch(0.88 0.06 240 / 0.35) 45%, transparent 75%);
+  --brand-gradient: linear-gradient(135deg, oklch(0.62 0.2 262), oklch(0.66 0.2 300), oklch(0.7 0.18 20));
 }
 @layer base {
   * {
@@ -117,14 +119,16 @@
   }
   .new-chat {
     width: 100%;
-    justify-content: space-between !important;
-    height: 42px !important;
+    justify-content: flex-start !important;
+    height: 46px !important;
+    border-radius: 999px !important;
+    background: var(--accent) !important;
+    color: var(--foreground) !important;
     box-shadow: none !important;
   }
   .side-label {
-    font: 10px var(--font-mono);
+    font: 500 13px var(--font-sans);
     color: var(--muted-foreground);
-    text-transform: uppercase;
     margin: 0 10px 11px;
   }
   .side-nav {
@@ -133,10 +137,11 @@
     gap: 5px;
   }
   .side-nav .nav-item {
-    justify-content: flex-start;
-    height: 39px;
-    color: var(--muted-foreground);
-    font-size: 12px;
+    justify-content: flex-start !important; padding-inline: 16px !important;
+    height: 44px;
+    border-radius: 999px;
+    color: var(--foreground);
+    font-size: 15px;
     font-weight: 500;
   }
   .side-nav .nav-item.active {
@@ -408,8 +413,9 @@
     box-shadow: var(--panel-shadow);
   }
   .composer [data-slot="input-group"] {
-    border-color: var(--border);
-    border-radius: 8px;
+    border-color: transparent !important;
+    border-radius: 32px;
+    box-shadow: none !important;
   }
   .composer textarea {
     font-size: 13px;
@@ -796,7 +802,7 @@
 .voice-orb { width: 88px; height: 88px; border-radius: 9999px; display: grid; place-items: center; background: var(--muted); color: var(--muted-foreground); border: 1px solid var(--border); transition: all .3s; }
 .voice-orb.live { background: var(--primary); color: var(--primary-foreground); box-shadow: 0 0 0 10px color-mix(in oklab, var(--primary) 18%, transparent); animation: voice-pulse 1.8s ease-in-out infinite; }
 @keyframes voice-pulse { 50% { box-shadow: 0 0 0 18px color-mix(in oklab, var(--primary) 8%, transparent); } }
-.voice-status { font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; color: var(--muted-foreground); }
+.voice-status { font-family: var(--font-sans); font-size: 0.85rem; color: var(--muted-foreground); }
 .voice-error { color: var(--destructive); font-size: 0.85rem; text-align: center; }
 .voice-controls { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
 .voice-transcript { width: 100%; max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; border-top: 1px solid var(--border); padding-top: 0.75rem; font-size: 0.95rem; line-height: 1.6; }
@@ -877,3 +883,21 @@
 
 .memory-add { display: flex; gap: .5rem; margin: .5rem 0; }
 .memory-add input { flex: 1; min-width: 0; background: var(--input); color: var(--foreground); border: 1px solid var(--border); border-radius: .5rem; padding: .4rem .6rem; font-size: .875rem; }
+
+/* Gemini-style light theme */
+body, .ghost-app, .workspace { background: var(--background); color: var(--foreground); }
+.workspace-body { background: var(--glow-bottom), var(--background) !important; background-attachment: fixed; }
+.ghost-app > aside, .sidebar, aside { background: var(--secondary); border-color: transparent !important; }
+.nav-item, .new-chat, .history-row { border-radius: 999px !important; border: none !important; }
+.nav-item:hover, .history-row:hover, .new-chat { background: var(--accent); }
+.workspace-topbar { background: transparent !important; border-color: transparent !important; }
+.composer { border-radius: 32px !important; background: var(--card) !important; border: 1px solid var(--border) !important; box-shadow: var(--panel-shadow); }
+.composer-region { background: transparent !important; }
+.welcome h1, .welcome-intro h1 { font-weight: 500; letter-spacing: -0.02em; background: var(--brand-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.quick-actions button, .quick-actions a { border-radius: 999px !important; background: var(--card); border: 1px solid var(--border) !important; }
+.modal-panel, [role="dialog"] { border-radius: 24px !important; }
+.side-label { text-transform: none; letter-spacing: 0; font-family: var(--font-sans); }
+.new-chat { color: var(--foreground) !important; font-weight: 500; justify-content: flex-start !important; }
+.workspace-topbar button, .model-label { font-family: var(--font-sans) !important; border-radius: 999px !important; }
+.composer:focus-within { border-color: var(--border) !important; outline: none; box-shadow: var(--panel-shadow); }
+.side-label { font-size: 13px; color: var(--muted-foreground); }
