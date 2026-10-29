@@ -1,4 +1,7 @@
 # Roadmap
+- [ ] Add Telegram image creation/editing and video jobs with delivery
+- [ ] Add Telegram photo, PDF and common document understanding with clear unsupported-file errors
+- [ ] Verify creative and upload flows without changing website presentation
 - [x] Open Telegram bot access to all users by verified Telegram sender ID; verify isolated chat access
 - [ ] Improve relevant cross-chat memory, corrections and forgetting; verify personalized replies
 - [x] Ghost-logo launch splash and direct stronger requested roasts
