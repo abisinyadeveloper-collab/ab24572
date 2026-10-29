@@ -26,9 +26,10 @@ export function extractMemoryFacts(text: string): string[] {
   const facts = new Set<string>();
   for (const raw of text.split(/(?<=[.!?\n።])\s*/)) {
     const line = raw.trim().replace(/[.!?።]+$/, "");
+    if (/^(?:please\s+)?(?:forget|stop remembering|delete .*memory)/i.test(line) || /\b(password|passcode|api key|access token|credit card|social security|secret key)\b/i.test(line)) continue;
     const remember = line.match(/^(?:please\s+)?remember(?:\s+that)?[:,]?\s+(.{3,})/i) ?? line.match(/^አስታውስ[:፡,]?\s*(.{3,})/);
     if (remember?.[1]) facts.add(remember[1]);
-    else if (/\b(my name is|i prefer|i work (at|as)|i live in|i am a|i'm a)\b/i.test(line) && line.length < 200) facts.add(line);
+    else if (/^(?:actually[, ]+|now[, ]+)?(?:my name is|i prefer|i work (at|as)|i live in|i moved to|my project is|my favorite colou?r is|my preferred language is|i am a|i'm a)\b/i.test(line) && line.length < 200 && !/\?/.test(raw)) facts.add(line.replace(/^(?:actually[, ]+|now[, ]+)/i, ""));
   }
   return [...facts].map((f) => f.slice(0, 300)).slice(0, 5);
 }
