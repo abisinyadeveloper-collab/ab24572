@@ -25,8 +25,9 @@ export async function handleGhostChat(request:Request) {
  const {supabaseAdmin}=await import('@/integrations/supabase/client.server');
  const {data:blocks,error:blockError}=await supabaseAdmin.from('ghost_ai_blocks').select('reason,status').in('model',Object.values(GHOST_MODELS));
  if(blockError) return Response.json({message:'Unable to check AI availability.'},{status:503});
- if(blocks?.length) return Response.json({message:blocks[0].reason},{status:blocks[0].status});
- const {error:saveError}=await db.from('ghost_threads').update({messages:messages as unknown as Json, title:messages[0].parts[0]?.text.slice(0,65)||'New conversation',updated_at:new Date().toISOString()}).eq('id',threadId);
+ const block=blocks?.[0];
+ if(block) return Response.json({message:block.reason},{status:block.status});
+ const {error:saveError}=await db.from('ghost_threads').update({messages:messages as unknown as Json, title:messages[0]?.parts[0]?.text.slice(0,65)||'New conversation',updated_at:new Date().toISOString()}).eq('id',threadId);
  if(saveError) return Response.json({message:'Could not save your message.'},{status:500});
  const gateway=createLovableAiGatewayRunIdFetch();
  const role=agents.find(a=>a.id===agent)?.name || 'Architect';
