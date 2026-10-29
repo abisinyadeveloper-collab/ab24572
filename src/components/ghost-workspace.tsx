@@ -71,6 +71,9 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
   const [loadError, setLoadError] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [avatarPath, setAvatarPath] = useState("");
+  const [avatarSrc, setAvatarSrc] = useState("");
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [profileNote, setProfileNote] = useState("");
   const [working, setWorking] = useState(false);
   useEffect(() => {
@@ -106,6 +109,8 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
       setThreads([]);
       setDisplayName("");
       setAvatarUrl("");
+      setAvatarPath("");
+      setAvatarSrc("");
       if (threadId) setInitialMessages(null);
       return;
     }
@@ -124,10 +129,22 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
       .select("display_name,avatar_url")
       .eq("id", user.id)
       .maybeSingle()
-      .then(({ data }) => {
-        if (live) {
-          setDisplayName(data?.display_name || "");
-          setAvatarUrl(data?.avatar_url || "");
+      .then(async ({ data }) => {
+        if (!live) return;
+        setDisplayName(data?.display_name || "");
+        const stored = data?.avatar_url || "";
+        if (stored.startsWith("avatars:")) {
+          const path = stored.slice("avatars:".length);
+          setAvatarPath(path);
+          setAvatarUrl("");
+          const { data: signed } = await supabase.storage
+            .from("avatars")
+            .createSignedUrl(path, 60 * 60);
+          if (live) setAvatarSrc(signed?.signedUrl || "");
+        } else {
+          setAvatarPath("");
+          setAvatarUrl(stored);
+          setAvatarSrc(stored);
         }
       });
     if (threadId)
@@ -177,6 +194,38 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
     if (id === threadId) await navigate({ to: "/" });
     else await refreshThreads();
   }
+  async function uploadAvatar(file: File) {
+    if (!user) return;
+    setProfileNote("");
+    if (!file.type.startsWith("image/")) {
+      setProfileNote("Choose an image file (PNG, JPG, or similar).");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setProfileNote("Images up to 2 MB are supported.");
+      return;
+    }
+    setAvatarUploading(true);
+    const ext = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "png";
+    const path = `${user.id}/avatar-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("avatars").upload(path, file, {
+      contentType: file.type,
+      upsert: true,
+    });
+    if (error) {
+      setAvatarUploading(false);
+      setProfileNote(error.message);
+      return;
+    }
+    const { data: signed } = await supabase.storage
+      .from("avatars")
+      .createSignedUrl(path, 60 * 60);
+    setAvatarPath(path);
+    setAvatarUrl("");
+    setAvatarSrc(signed?.signedUrl || "");
+    setAvatarUploading(false);
+    setProfileNote("Photo ready — save details to keep it.");
+  }
   async function saveProfile(e: React.FormEvent) {
     e.preventDefault();
     if (!user) return;
@@ -188,7 +237,7 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
     const { error } = await supabase.from("profiles").upsert({
       id: user.id,
       display_name: displayName.trim().slice(0, 60),
-      avatar_url: avatarUrl.trim(),
+      avatar_url: avatarPath ? `avatars:${avatarPath}` : avatarUrl.trim(),
     });
     setProfileNote(error ? error.message : "Account details saved.");
   }
@@ -276,8 +325,8 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
               onClick={() => (user ? setPanel("profile") : setAuthOpen(true))}
             >
               <span className="account-avatar">
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt="Your avatar" referrerPolicy="no-referrer" />
+                {avatarSrc ? (
+                  <img src={avatarSrc} alt="Your avatar" referrerPolicy="no-referrer" />
                 ) : (
                   <Fingerprint size={16} />
                 )}
@@ -499,13 +548,44 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
                       onChange={(e) => setDisplayName(e.target.value)}
                     />
                   </label>
+                  <div className="form-field">
+                    Profile photo
+                    <div className="avatar-upload">
+                      {avatarSrc ? (
+                        <img src={avatarSrc} alt="Your avatar" referrerPolicy="no-referrer" />
+                      ) : (
+                        <span className="avatar-placeholder">
+                          {(displayName || user.email || "G").slice(0, 1).toUpperCase()}
+                        </span>
+                      )}
+                      <label className="avatar-upload-btn">
+                        {avatarUploading ? <Loader2 className="animate-spin" /> : <Plus />}
+                        {avatarUploading ? "Uploading…" : "Upload photo"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="sr-only"
+                          disabled={avatarUploading}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) void uploadAvatar(file);
+                            e.target.value = "";
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
                   <label className="form-field">
-                    Avatar image address
+                    Or paste an image address
                     <input
                       type="url"
                       placeholder="https://…"
                       value={avatarUrl}
-                      onChange={(e) => setAvatarUrl(e.target.value)}
+                      onChange={(e) => {
+                        setAvatarUrl(e.target.value);
+                        setAvatarPath("");
+                        setAvatarSrc(e.target.value);
+                      }}
                     />
                   </label>
                   <p className="form-note">{user.email}</p>
