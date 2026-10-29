@@ -1,7 +1,8 @@
-// @vitest-environment node
 import { describe, expect, it } from "vitest";
+import { File as NodeFile } from "node:buffer";
 import { zipSync, strToU8 } from "fflate";
 import { readGhostFile } from "./ghost-files";
+const File = NodeFile as unknown as typeof globalThis.File;
 describe("Ghost file understanding", () => {
   it("reads text and CSV without executing them", async () => {
     const read = await readGhostFile(new File(["name,total\nAbel,42"], "sales.csv", { type: "text/csv" }));
