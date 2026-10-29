@@ -12,6 +12,26 @@ export type TierId = (typeof tiers)[number]["id"];
 export function getTier(id: string | undefined) {
   return tiers.find((t) => t.id === id) ?? tiers[2];
 }
+// "Auto" lets Ghost choose a tier per question: short chat → Lite, deep work → Ghost, the rest → Ayna.
+export const AUTO_TIER = { id: "auto", name: "Auto", label: "Ghost picks the best tier" } as const;
+const deepWork = /```|\b(architect|architecture|design|debug|refactor|security|threat|compare|analy[sz]e|strategy|plan|prove|optimi[sz]e|research|step[- ]by[- ]step|review)\b/i;
+export function pickTier(text: string): TierId {
+  const t = text.trim();
+  if (t.length > 600 || deepWork.test(t)) return "ghost";
+  if (t.length <= 80) return "lite";
+  return "ayna";
+}
+// Long-term memory: only facts the user states about themselves or explicitly asks Ghost to remember.
+export function extractMemoryFacts(text: string): string[] {
+  const facts = new Set<string>();
+  for (const raw of text.split(/(?<=[.!?\n።])\s*/)) {
+    const line = raw.trim().replace(/[.!?።]+$/, "");
+    const remember = line.match(/^(?:please\s+)?remember(?:\s+that)?[:,]?\s+(.{3,})/i) ?? line.match(/^አስታውስ[:፡,]?\s*(.{3,})/);
+    if (remember?.[1]) facts.add(remember[1]);
+    else if (/\b(my name is|i prefer|i work (at|as)|i live in|i am a|i'm a)\b/i.test(line) && line.length < 200) facts.add(line);
+  }
+  return [...facts].map((f) => f.slice(0, 300)).slice(0, 5);
+}
 export const agents = [
   {
     id: "architect",
