@@ -137,7 +137,7 @@
     gap: 5px;
   }
   .side-nav .nav-item {
-    justify-content: flex-start;
+    justify-content: flex-start !important; padding-inline: 16px !important;
     height: 44px;
     border-radius: 999px;
     color: var(--foreground);
