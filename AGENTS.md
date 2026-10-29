@@ -18,3 +18,5 @@
 - Creative media uses authenticated streaming image routes and authenticated video functions; account-owned files live in private storage and video jobs serialize across the project to prevent duplicate concurrent generation.
 - Voice language is a validated startup choice with a server-owned translated greeting; changing language requires a new call so lifecycle and billing remain predictable.
 - Chat, image studio, and video studio each have a content route and unique metadata; the shared workspace preserves consistent account navigation.
+- Auto tier and memory extraction are deterministic rules in src/lib/ghost.ts (no extra model call), so routing is free, fast and testable.
+- Memories and activity rows are owner-scoped tables written with the caller's own token (chat and voice relay), never the admin client.

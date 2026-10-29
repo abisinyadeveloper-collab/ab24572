@@ -318,6 +318,7 @@ export function bindLiveConnection(
   let finishDrain: (() => void) | undefined;
   let browserReady = false;
   let language = getVoiceLanguage();
+  let caller: Caller | undefined;
   let greetingRequested = false;
   let greetingCommand: { id: string; type: "instructions" | "commentary" } | undefined;
   let greetingTimer: ReturnType<typeof setTimeout> | undefined;
@@ -474,13 +475,15 @@ export function bindLiveConnection(
         (plan) => {
           pending.plan = plan;
         },
-        (name) => taskTools.push(name),,
+        (name) => taskTools.push(name),
       );
       if (closing || controller.signal.aborted) return;
       if (taskRevision !== revision) return;
       deliverResult(id, answer.trim(), pending.plan);
+      void logVoiceActivity(caller, taskTools, Date.now() - taskStarted, true);
     } catch {
       if (closing || controller.signal.aborted) return;
+      void logVoiceActivity(caller, taskTools, Date.now() - taskStarted, false);
       backendMessages.push({
         role: "assistant",
         content:

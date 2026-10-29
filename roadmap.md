@@ -9,7 +9,7 @@
 - [x] Verify media services and surface connector setup status.
 - [ ] Verify audible live conversation — sandbox browser network setup times out before reaching the voice service.
 - [ ] Connect personal services — workspace owner must configure OAuth clients; Gmail, TikTok, and X have none configured.
-- [ ] Auto tier: Ghost picks Lite/Ayna/Ghost per question.
-- [ ] Long-term memory across chats (view/delete in account panel).
-- [ ] Voice tools: web search during calls.
-- [ ] Activity log page (tier, models, tools, speed, tokens).
+- [x] Auto tier: Ghost picks Lite/Ayna/Ghost per question.
+- [x] Long-term memory across chats (view/delete in account panel).
+- [x] Voice tools: web search during calls.
+- [x] Activity log page (tier, models, tools, speed, tokens).
