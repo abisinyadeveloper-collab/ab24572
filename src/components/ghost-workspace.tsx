@@ -81,7 +81,7 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
   function setView(next: "chat" | "image" | "video") {
     void navigate({ to: next === "image" ? "/images" : next === "video" ? "/videos" : "/" });
   }
-  const [panel, setPanel] = useState<"capabilities" | "models" | "profile" | "connections" | null>(null);
+  const [panel, setPanel] = useState<"capabilities" | "models" | "profile" | "connections" | "activity" | null>(null);
   const [initialMessages, setInitialMessages] = useState<UIMessage[] | null>(threadId ? null : []);
   const [loadError, setLoadError] = useState("");
   const [displayName, setDisplayName] = useState("");
