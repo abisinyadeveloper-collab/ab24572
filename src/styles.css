@@ -971,3 +971,21 @@ body, .ghost-app, .workspace { background: var(--background); color: var(--foreg
 .tools-list button:hover { background: var(--muted); }
 .tools-list strong { display: block; font-weight: 500; font-size: 1.05rem; }
 .tools-list small { display: block; color: var(--muted-foreground); font-size: .9rem; }
+
+/* Modern polish 2026: glass composer, chat bubbles, message entrance, aurora voice orb */
+.composer [data-slot="input-group"] { border-radius: 28px; background: color-mix(in oklab, var(--card) 82%, transparent); backdrop-filter: blur(18px); box-shadow: 0 1px 0 color-mix(in oklab, var(--foreground) 4%, transparent), 0 18px 48px -20px color-mix(in oklab, var(--primary) 35%, transparent); transition: box-shadow .25s, transform .25s; }
+.composer [data-slot="input-group"]:focus-within { box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 35%, transparent), 0 22px 56px -18px color-mix(in oklab, var(--primary) 45%, transparent); }
+.transcript-inner > * { animation: msg-in .35s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes msg-in { from { opacity: 0; transform: translateY(8px); } }
+.is-user [data-slot], .group.is-user > div { border-radius: 22px 22px 6px 22px !important; }
+.group.is-user > div:first-child { background: linear-gradient(135deg, color-mix(in oklab, var(--primary) 14%, var(--secondary)), var(--secondary)); }
+.history-row .thread-link { border-radius: 9999px; transition: background .2s; }
+.workspace-topbar { backdrop-filter: blur(14px); background: color-mix(in oklab, var(--background) 75%, transparent); }
+.voice-presence .core { background: conic-gradient(from 0deg, var(--primary), color-mix(in oklab, var(--primary) 40%, var(--accent)), color-mix(in oklab, var(--primary) 60%, var(--background)), var(--primary)); }
+.voice-presence:not(.state-idle):not(.state-closed) .core { animation: orb-aurora 6s linear infinite; }
+@keyframes orb-aurora { to { filter: hue-rotate(40deg); } }
+.voice-call { gap: 1.25rem; }
+.voice-controls button { border-radius: 9999px; }
+.voice-transcript p { padding: .6rem .9rem; border-radius: 18px; background: var(--muted); }
+.voice-transcript p.you { align-self: flex-end; background: color-mix(in oklab, var(--primary) 12%, var(--secondary)); }
+@media (prefers-reduced-motion: reduce) { .transcript-inner > *, .voice-presence .core { animation: none !important; } }

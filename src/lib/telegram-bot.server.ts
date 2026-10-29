@@ -19,6 +19,8 @@ function safeEqual(a: string, b: string) {
   return l.length === r.length && timingSafeEqual(l, r);
 }
 
+const menu = { inline_keyboard: [[{ text: "🎨 Image", callback_data: "tip:image" }, { text: "🎬 Video", callback_data: "tip:video" }], [{ text: "🌐 Website", callback_data: "tip:site" }, { text: "🔥 Roast me", callback_data: "tip:roast" }], [{ text: "🧹 New chat", callback_data: "tip:new" }, { text: "❓ Help", callback_data: "tip:help" }]] };
+const tips: Record<string, string> = { image: "Send: /image a lion in Addis at sunset", video: "Send: /video waves on a beach — then /status in a minute", site: "Send: /site a landing page for my coffee shop", roast: "Send: roast mode on — then say anything 😈", new: "Send /new to start fresh.", help: "Send /help to see every tool." };
 type Msg = {
   chat: { id: number; type: string };
   from?: { id: number; is_bot?: boolean };
@@ -37,7 +39,14 @@ export async function handleTelegramWebhook(request: Request) {
   const got = request.headers.get("X-Telegram-Bot-Api-Secret-Token") ?? "";
   if (!safeEqual(got, telegramWebhookSecret(connKey))) return new Response("Unauthorized", { status: 401 });
 
-  const update = (await request.json()) as { update_id?: number; message?: Msg };
+  const update = (await request.json()) as { update_id?: number; message?: Msg; callback_query?: { id: string; data?: string; from: { id: number; is_bot?: boolean }; message?: { chat: { id: number; type: string } } } };
+  const cb = update.callback_query;
+  if (cb) {
+    await tg("answerCallbackQuery", { callback_query_id: cb.id }).catch(() => {});
+    const tip = tips[(cb.data ?? "").replace(/^tip:/, "")];
+    if (tip && !cb.from.is_bot && cb.message?.chat.type === "private" && cb.message.chat.id === cb.from.id) await tg("sendMessage", { chat_id: cb.from.id, text: tip });
+    return Response.json({ ok: true });
+  }
   const msg = update.message;
   const userId = msg ? telegramUserId(msg) : null;
   if (!Number.isSafeInteger(update.update_id) || !msg || userId === null || typeof update.update_id !== "number") return Response.json({ ok: true });
@@ -64,11 +73,11 @@ export async function handleTelegramWebhook(request: Request) {
     return Response.json({ ok: true });
   }
   if (text === "/start") {
-    await tg("sendMessage", { chat_id: chatId, text: `👻 Hi, I'm Ghost. You're signed in with your Telegram account.\nYour Telegram ID: ${userId}\nChat, send a photo or document, create images, videos or a website file. /help lists the tools.`, reply_markup: { remove_keyboard: true } });
+    await tg("sendMessage", { chat_id: chatId, text: `👻 Hi, I'm Ghost. You're signed in with your Telegram account.\nYour Telegram ID: ${userId}\nChat, send a photo or document, create images, videos or a website file. Pick a tool below or just type.`, reply_markup: menu });
     return Response.json({ ok: true });
   }
   if (text === "/help") {
-    await tg("sendMessage", { chat_id: chatId, text: "Ghost tools\n/image your idea — create an image\n/edit changes — attach or reply to a photo\n/video your idea — start a 5-second video\n/status — check and collect your latest video (check soon; unfinished videos expire)\n/site your idea — receive a standalone HTML website file, not a published site\n/new — clear chat history\nSend photos, PDFs, DOCX/PPTX/XLSX, OpenDocument, text, CSV or code under 20 MB. Office reading extracts text, not perfect layout. Audio, video analysis, encrypted files and executables aren't supported. AI requests use the owner's workspace credits." });
+    await tg("sendMessage", { chat_id: chatId, text: "Ghost tools\n/image your idea — create an image\n/edit changes — attach or reply to a photo\n/video your idea — start a 5-second video\n/status — check and collect your latest video (check soon; unfinished videos expire)\n/site your idea — receive a standalone HTML website file, not a published site\n/new — clear chat history\nSend photos, PDFs, DOCX/PPTX/XLSX, OpenDocument, text, CSV or code under 20 MB. Office reading extracts text, not perfect layout. Audio, video analysis, encrypted files and executables aren't supported. AI requests use the owner's workspace credits.", reply_markup: menu });
     return Response.json({ ok: true });
   }
   if (text === "/new") {
