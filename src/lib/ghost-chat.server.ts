@@ -108,7 +108,7 @@ export async function handleGhostChat(request: Request) {
     .from("ghost_threads")
     .update({
       messages: messages as unknown as Json,
-      title: messages[0]?.parts[0]?.text.slice(0, 65) || "New conversation",
+      title: messages[0]?.parts.find((p) => p.type === "text")?.text.slice(0, 65) || "New conversation",
       updated_at: new Date().toISOString(),
     })
     .eq("id", threadId);
