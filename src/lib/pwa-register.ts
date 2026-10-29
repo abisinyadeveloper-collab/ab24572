@@ -4,7 +4,7 @@ const LOVABLE_HOSTS = [".lovable.app", ".gpt-eng.com", ".gptengineer.run"];
 
 function refused() {
   const host = window.location.hostname.toLowerCase();
-  const label = host.split(".")[0];
+  const label = host.split(".")[0] ?? "";
   let framed = true;
   try { framed = window.self !== window.top; } catch { /* cross-origin frame */ }
   return (
