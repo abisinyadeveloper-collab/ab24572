@@ -10,13 +10,15 @@ import {
 import { z } from "zod";
 import { createResponsesCall } from "./ai/responses";
 import { createLovableAiGatewayRunIdFetch, withLovableAiGatewayRunIdHeader } from "./ai/run-id";
-import { GHOST_MODELS, ghostInstructions, agents, ownsThread, getTier, pickTier, extractMemoryFacts } from "./ghost";
+import { GHOST_MODELS, ghostInstructions, agents, ownsThread, getTier, pickTier, extractMemoryFacts, pickAgent, detectMediaIntent } from "./ghost";
+import { MEDIA_MODELS } from "./ghost-media";
+import { startGhostVideo, assertMediaAvailable, recordMediaBlock } from "./ghost-media.server";
 import { wantsWeb, gatherWebContext } from "./ghost-web.server";
 import type { Database, Json } from "@/integrations/supabase/types";
 
 const bodySchema = z.object({
   threadId: z.string().uuid(),
-  agent: z.enum(["architect", "coder", "reviewer", "defender", "researcher", "arbiter"]),
+  agent: z.enum(["architect", "coder", "reviewer", "defender", "researcher", "arbiter", "auto"]),
   tier: z.enum(["auto", "lite", "ayna", "ghost"]).optional(),
   messages: z
     .array(
@@ -100,7 +102,8 @@ export async function handleGhostChat(request: Request) {
     .eq("id", threadId);
   if (saveError) return Response.json({ message: "Could not save your message." }, { status: 500 });
   const gateway = createLovableAiGatewayRunIdFetch();
-  const role = agents.find((a) => a.id === agent)?.name || "Architect";
+  const agentChoice = agent === "auto" ? pickAgent(lastUserText) : agent;
+  const role = agents.find((a) => a.id === agentChoice)?.name || "Architect";
   const newFacts = extractMemoryFacts(lastUserText);
   if (newFacts.length) {
     const { error: memError } = await db.from("ghost_memories").insert(newFacts.map((fact) => ({ user_id: userId, fact })));
