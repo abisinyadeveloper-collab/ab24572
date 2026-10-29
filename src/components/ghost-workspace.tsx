@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import type { User } from "@supabase/supabase-js";
@@ -60,7 +61,8 @@ import { GhostAuth } from "./ghost-auth";
 import { GhostVoiceDialog } from "./ghost-voice";
 import { GhostStudio } from "./ghost-studio";
 import { Mic as MicIcon } from "lucide-react";
-import { agents, tiers, AUTO_TIER, type AgentId, type TierId } from "@/lib/ghost";
+import { agents, tiers, AUTO_AGENT, AUTO_TIER, type AgentChoice, type AgentId, type TierId } from "@/lib/ghost";
+import { pollGhostVideo } from "@/lib/ghost-media.functions";
 import { GhostActivity, GhostMemories } from "./ghost-insights";
 type TierChoice = TierId | "auto";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -110,7 +112,7 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
   const [authReady, setAuthReady] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [threads, setThreads] = useState<Thread[]>([]);
-  const [activeAgent, setActiveAgent] = useState<AgentId>("architect");
+  const [activeAgent, setActiveAgent] = useState<AgentChoice>("auto");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [voiceOpen, setVoiceOpen] = useState(false);
   const view = initialView;
