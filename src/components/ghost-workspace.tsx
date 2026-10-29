@@ -66,7 +66,7 @@ import ghostMark from "@/assets/ghost-emblem.jpg";
 type Thread = { id: string; title: string; updated_at: string };
 const agentIcons = [Workflow, Code2, ScanLine, ShieldCheck, BookOpen, Scale];
 
-export function GhostWorkspace({ threadId }: { threadId?: string }) {
+export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: string; initialView?: "chat" | "image" | "video" }) {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
@@ -75,7 +75,10 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
   const [activeAgent, setActiveAgent] = useState<AgentId>("architect");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [voiceOpen, setVoiceOpen] = useState(false);
-  const [view, setView] = useState<"chat" | "image" | "video">("chat");
+  const view = initialView;
+  function setView(next: "chat" | "image" | "video") {
+    void navigate({ to: next === "image" ? "/images" : next === "video" ? "/videos" : "/" });
+  }
   const [panel, setPanel] = useState<"capabilities" | "models" | "profile" | "connections" | null>(null);
   const [initialMessages, setInitialMessages] = useState<UIMessage[] | null>(threadId ? null : []);
   const [loadError, setLoadError] = useState("");
@@ -274,7 +277,7 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
           <div>
             <p className="side-label">WORKSPACE</p>
             <nav className="side-nav">
-              <Button variant="ghost" className="nav-item active" asChild>
+              <Button variant="ghost" className={`nav-item ${view === "chat" ? "active" : ""}`} asChild>
                 <Link to="/" onClick={() => { setMobileOpen(false); setView("chat"); }}>
                   <MessageSquare />
                   Chat
@@ -319,6 +322,13 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
                   </Button>
                 </div>
               ))
+            ) : threadId ? (
+              <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
+                {!loadError && (user || !authReady) && <Loader2 className="animate-spin text-muted-foreground" />}
+                <p role="status" className="form-note">{loadError || (!authReady ? "Opening your conversation…" : !user ? "Sign in to open your saved conversation." : "Loading your conversation…")}</p>
+                {authReady && !user && <Button onClick={() => setAuthOpen(true)}>Sign in</Button>}
+                {loadError && <Button variant="outline" onClick={() => void navigate({ to: "/" })}>New chat</Button>}
+              </div>
             ) : (
               <p className="empty-history">
                 {user
