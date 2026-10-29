@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import type { User } from "@supabase/supabase-js";
@@ -60,7 +61,8 @@ import { GhostAuth } from "./ghost-auth";
 import { GhostVoiceDialog } from "./ghost-voice";
 import { GhostStudio } from "./ghost-studio";
 import { Mic as MicIcon } from "lucide-react";
-import { agents, tiers, AUTO_TIER, type AgentId, type TierId } from "@/lib/ghost";
+import { agents, tiers, AUTO_AGENT, AUTO_TIER, type AgentChoice, type AgentId, type TierId } from "@/lib/ghost";
+import { pollGhostVideo } from "@/lib/ghost-media.functions";
 import { GhostActivity, GhostMemories } from "./ghost-insights";
 type TierChoice = TierId | "auto";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -110,7 +112,7 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
   const [authReady, setAuthReady] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [threads, setThreads] = useState<Thread[]>([]);
-  const [activeAgent, setActiveAgent] = useState<AgentId>("architect");
+  const [activeAgent, setActiveAgent] = useState<AgentChoice>("auto");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [voiceOpen, setVoiceOpen] = useState(false);
   const view = initialView;
@@ -681,7 +683,7 @@ function StarterComposer({
   onPlus,
   onVoice,
 }: {
-  agent: AgentId;
+  agent: AgentChoice;
   onSend: (s: string) => Promise<void>;
   busy: boolean;
   onPlus: () => void;
@@ -720,6 +722,57 @@ function StarterComposer({
     </>
   );
 }
+type ChatMediaData = { kind: "image" | "video"; path?: string; id?: string; prompt: string };
+function ChatMedia({ media }: { media: ChatMediaData }) {
+  const pollVideo = useServerFn(pollGhostVideo);
+  const [src, setSrc] = useState("");
+  const [status, setStatus] = useState("");
+  const [failure, setFailure] = useState("");
+  useEffect(() => {
+    if (media.kind !== "image" || !media.path) return;
+    let live = true;
+    void supabase.storage.from("ghost-media").createSignedUrl(media.path, 3600).then(({ data }) => {
+      if (live && data) setSrc(data.signedUrl);
+    });
+    return () => { live = false; };
+  }, [media.kind, media.path]);
+  useEffect(() => {
+    if (media.kind !== "video" || !media.id) return;
+    let live = true;
+    let timer: ReturnType<typeof setTimeout>;
+    async function check() {
+      try {
+        const row = (await pollVideo({ data: { id: media.id ?? "" } })) as { status: string; error: string | null; path: string | null };
+        if (!live) return;
+        setStatus(row.status);
+        setFailure(row.error ?? "");
+        if (row.status === "completed" && row.path) {
+          const { data } = await supabase.storage.from("ghost-media").createSignedUrl(row.path, 3600);
+          if (live && data) setSrc(data.signedUrl);
+          return;
+        }
+        if (row.status === "failed") return;
+      } catch {
+        if (live) { setStatus("in_progress"); setFailure(""); }
+      }
+      if (live) timer = setTimeout(check, 8000);
+    }
+    timer = setTimeout(check, 3000);
+    return () => { live = false; clearTimeout(timer); };
+  }, [media.kind, media.id, pollVideo]);
+  if (media.kind === "image") {
+    return src ? <img className="chat-media" src={src} alt={media.prompt} /> : (
+      <div className="chat-media chat-media-pending"><Loader2 className="animate-spin" /><span>Creating your image…</span></div>
+    );
+  }
+  if (src) return <video className="chat-media" src={src} controls preload="metadata" />;
+  return (
+    <div className="chat-media chat-media-pending">
+      {status === "failed" ? <Film /> : <Loader2 className="animate-spin" />}
+      <span>{status === "failed" && failure ? failure : "Your video is generating… it will appear here and in your library."}</span>
+    </div>
+  );
+}
 function GhostChat({
   threadId,
   initialMessages,
@@ -729,8 +782,8 @@ function GhostChat({
 }: {
   threadId: string;
   initialMessages: UIMessage[];
-  agent: AgentId;
-  onAgentChange: (id: AgentId) => void;
+  agent: AgentChoice;
+  onAgentChange: (id: AgentChoice) => void;
   onFinish: () => Promise<void>;
 }) {
   const [text, setText] = useState("");
@@ -825,6 +878,8 @@ function GhostChat({
                       <summary>Reasoning summary</summary>
                       <MessageResponse>{p.text}</MessageResponse>
                     </details>
+                  ) : p.type === "data-media" ? (
+                    <ChatMedia key={i} media={p.data as ChatMediaData} />
                   ) : null,
                 )}
               </MessageContent>
@@ -868,10 +923,11 @@ function GhostChat({
               <select
                 aria-label="Agent perspective"
                 value={agent}
-                onChange={(e) => onAgentChange(e.target.value as AgentId)}
+                onChange={(e) => onAgentChange(e.target.value as AgentChoice)}
                 disabled={busy}
                 className="bg-card text-foreground outline-none"
               >
+                <option value="auto">{AUTO_AGENT.name}</option>
                 {agents.map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.name}
