@@ -2,7 +2,7 @@ import { unzipSync, strFromU8 } from "fflate";
 import { XMLParser } from "fast-xml-parser";
 
 export const MAX_FILE_BYTES = 20 * 1024 * 1024;
-export type ReadableUpload = { kind: "image" | "pdf"; file: File } | { kind: "text"; text: string };
+export type ReadableUpload = { kind: "image"; file: File } | { kind: "pdf"; file: File } | { kind: "text"; text: string };
 const textExtensions = /\.(txt|md|csv|tsv|json|xml|yaml|yml|toml|log|html?|css|js|jsx|ts|tsx|py|go|rs|java|c|cpp|h|sql|sh|rb|php|ini|conf|srt|vtt)$/i;
 
 function collectText(value: unknown): string[] {
