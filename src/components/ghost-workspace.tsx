@@ -185,13 +185,11 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
       setProfileNote("Use a secure HTTPS image address.");
       return;
     }
-    const { error } = await supabase
-      .from("profiles")
-      .upsert({
-        id: user.id,
-        display_name: displayName.trim().slice(0, 60),
-        avatar_url: avatarUrl.trim(),
-      });
+    const { error } = await supabase.from("profiles").upsert({
+      id: user.id,
+      display_name: displayName.trim().slice(0, 60),
+      avatar_url: avatarUrl.trim(),
+    });
     setProfileNote(error ? error.message : "Account details saved.");
   }
   const userLabel = displayName || user?.email?.split("@")[0] || "Your workspace";
