@@ -22,6 +22,13 @@
       "when": 1793269248524,
       "tag": "0002_ghost_media_library",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793269309646,
+      "tag": "0003_serialize_ghost_video_generation",
+      "breakpoints": true
     }
   ]
 }

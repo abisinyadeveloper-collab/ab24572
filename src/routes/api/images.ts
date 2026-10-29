@@ -1,0 +1,2 @@
+import { createFileRoute } from "@tanstack/react-router";
+export const Route = createFileRoute("/api/images")({ server: { handlers: { POST: async ({ request }) => { const { handleGhostImage } = await import("@/lib/ghost-media.server"); return handleGhostImage(request); } } } });
