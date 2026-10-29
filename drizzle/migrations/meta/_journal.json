@@ -15,6 +15,13 @@
       "when": 1793280864449,
       "tag": "0001_telegram_public_users",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793281211619,
+      "tag": "0002_telegram_creative_media",
+      "breakpoints": true
     }
   ]
 }

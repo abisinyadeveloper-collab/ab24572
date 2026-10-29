@@ -203,6 +203,53 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_media: {
+        Row: {
+          created_at: string
+          error: string | null
+          gateway_id: string | null
+          id: string
+          kind: string
+          path: string | null
+          prompt: string
+          status: string
+          telegram_id: number
+          update_id: number
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          gateway_id?: string | null
+          id?: string
+          kind: string
+          path?: string | null
+          prompt: string
+          status?: string
+          telegram_id: number
+          update_id: number
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          gateway_id?: string | null
+          id?: string
+          kind?: string
+          path?: string | null
+          prompt?: string
+          status?: string
+          telegram_id?: number
+          update_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_media_telegram_id_fkey"
+            columns: ["telegram_id"]
+            isOneToOne: false
+            referencedRelation: "telegram_users"
+            referencedColumns: ["telegram_id"]
+          },
+        ]
+      }
       telegram_updates: {
         Row: {
           created_at: string
