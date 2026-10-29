@@ -64,7 +64,7 @@ import { agents, tiers, AUTO_TIER, type AgentId, type TierId } from "@/lib/ghost
 import { GhostActivity, GhostMemories } from "./ghost-insights";
 type TierChoice = TierId | "auto";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Check, ChevronDown, Plus, AudioLines, Lightbulb, Code2, Search as SearchIcon } from "lucide-react";
+import { ChevronDown, AudioLines } from "lucide-react";
 const tierEvent = "ghost-tier-change";
 function useTier(): [TierChoice, (t: TierChoice) => void] {
   const [tier, setTierState] = useState<TierChoice>("auto");
