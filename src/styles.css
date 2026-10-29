@@ -94,8 +94,10 @@
     border-right: 1px solid var(--border);
     background: var(--card);
     padding: 26px 17px 16px;
-    gap: 25px;
+    gap: 18px;
     z-index: 30;
+    min-height: 0;
+    overflow-y: auto;
   }
   .brand {
     display: flex;
@@ -139,7 +141,7 @@
   }
   .side-nav .nav-item {
     justify-content: flex-start !important; padding-inline: 16px !important;
-    height: 44px;
+    height: 38px;
     border-radius: 999px;
     color: var(--foreground);
     font-size: 15px;
@@ -153,8 +155,8 @@
     color: var(--primary);
   }
   .sidebar-history {
-    flex: 1;
-    min-height: 0;
+    flex: 1 0 auto;
+    min-height: 160px;
     overflow: auto;
   }
   .history-row {
