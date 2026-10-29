@@ -8,4 +8,13 @@ export const voiceLanguages = [
   { id: "es", name: "Español", greeting: "Hola, soy Ghost. ¿En qué puedo ayudarte hoy?" },
 ] as const;
 export function getVoiceLanguage(id?: string) { return voiceLanguages.find(l => l.id === id) ?? voiceLanguages[0]; }
+export function detectVoiceLanguage(): string {
+  if (typeof navigator === "undefined") return "am";
+  const tags = navigator.languages?.length ? navigator.languages : [navigator.language];
+  for (const tag of tags) {
+    const base = String(tag || "").toLowerCase().split("-")[0];
+    if (voiceLanguages.some(l => l.id === base)) return base;
+  }
+  return "am";
+}
 export function ownsMediaPath(userId: string, path: string) { return path.startsWith(`${userId}/`) && !path.includes(".."); }
