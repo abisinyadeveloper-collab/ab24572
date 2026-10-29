@@ -833,6 +833,9 @@
 .composer-footer > span:first-child { display: none; }
 .message-label { font-family: var(--font-sans); font-size: 13px; font-weight: 600; color: var(--foreground); }
 .message-actions { display: flex; gap: 4px; color: var(--muted-foreground); margin-top: 8px; }
+.chat-media { display: block; width: 100%; max-width: 420px; border-radius: 16px; margin-top: 10px; box-shadow: 0 1px 4px rgb(0 0 0 / 0.08); }
+.chat-media-pending { display: flex; align-items: center; gap: 10px; padding: 18px 20px; background: var(--card); border: 1px solid var(--border); color: var(--muted-foreground); font-size: 13px; }
+.chat-media-pending svg { width: 18px; color: var(--muted-foreground); }
 .connection-row { display: flex; gap: 12px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
 .connection-row svg { width: 18px; color: var(--muted-foreground); }
 .connection-row strong { flex: 1; }
