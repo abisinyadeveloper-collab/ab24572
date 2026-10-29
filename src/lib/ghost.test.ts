@@ -20,3 +20,15 @@ describe("tiers", () => {
     expect(getTier(undefined).id).toBe("ghost");
   });
 });
+
+import { pickTier, extractMemoryFacts } from "./ghost";
+describe("auto tier", () => {
+  it("short chat uses Lite", () => expect(pickTier("hi, how are you?")).toBe("lite"));
+  it("deep work uses Ghost", () => expect(pickTier("Design the architecture for a payments service")).toBe("ghost"));
+  it("medium question uses Ayna", () => expect(pickTier("Can you explain how photosynthesis works in plants and why leaves change their color during autumn months?")).toBe("ayna"));
+});
+describe("memory facts", () => {
+  it("saves explicit remember requests", () => expect(extractMemoryFacts("Remember that my project is Cedar.")).toEqual(["my project is Cedar"]));
+  it("saves self-descriptions", () => expect(extractMemoryFacts("My name is Abel. What is 2+2?")).toEqual(["My name is Abel"]));
+  it("ignores ordinary questions", () => expect(extractMemoryFacts("What is the capital of Kenya?")).toEqual([]));
+});

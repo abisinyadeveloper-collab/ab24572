@@ -29,6 +29,13 @@
       "when": 1793269309646,
       "tag": "0003_serialize_ghost_video_generation",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793270924351,
+      "tag": "0004_ghost_memory_activity",
+      "breakpoints": true
     }
   ]
 }

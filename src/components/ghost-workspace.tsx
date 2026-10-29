@@ -60,7 +60,9 @@ import { GhostAuth } from "./ghost-auth";
 import { GhostVoiceDialog } from "./ghost-voice";
 import { GhostStudio } from "./ghost-studio";
 import { Mic as MicIcon } from "lucide-react";
-import { agents, tiers, type AgentId, type TierId } from "@/lib/ghost";
+import { agents, tiers, AUTO_TIER, type AgentId, type TierId } from "@/lib/ghost";
+import { GhostActivity, GhostMemories } from "./ghost-insights";
+type TierChoice = TierId | "auto";
 import ghostMark from "@/assets/ghost-emblem.jpg";
 
 type Thread = { id: string; title: string; updated_at: string };
@@ -79,7 +81,7 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
   function setView(next: "chat" | "image" | "video") {
     void navigate({ to: next === "image" ? "/images" : next === "video" ? "/videos" : "/" });
   }
-  const [panel, setPanel] = useState<"capabilities" | "models" | "profile" | "connections" | null>(null);
+  const [panel, setPanel] = useState<"capabilities" | "models" | "profile" | "connections" | "activity" | null>(null);
   const [initialMessages, setInitialMessages] = useState<UIMessage[] | null>(threadId ? null : []);
   const [loadError, setLoadError] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -293,6 +295,9 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
               <Button variant="ghost" className={`nav-item ${view === "video" ? "active" : ""}`} onClick={() => { setView("video"); setMobileOpen(false); }}>
                 <Film />Videos
               </Button>
+              <Button variant="ghost" className="nav-item" onClick={() => (user ? setPanel("activity") : setAuthOpen(true))}>
+                <ScanLine />Activity
+              </Button>
               <Button variant="ghost" className="nav-item" onClick={() => setPanel("connections")}>
                 <Plug />Connections
               </Button>
@@ -481,17 +486,19 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
                 ? "Ghost models"
                 : panel === "profile"
                   ? "Your account"
-                  : panel === "connections" ? "Connections" : "About Ghost"}
+                  : panel === "connections" ? "Connections" : panel === "activity" ? "Activity" : "About Ghost"}
             </DialogTitle>
             <DialogDescription>
               {panel === "models"
                 ? "Lite, Ayna, and Ghost."
                 : panel === "profile"
                   ? "Make this workspace yours."
-                  : panel === "connections" ? "Your services, connected to Ghost." : "Your personal AI assistant."}
+                  : panel === "connections" ? "Your services, connected to Ghost." : panel === "activity" ? "Your recent answers: tier, tools, speed and tokens." : "Your personal AI assistant."}
             </DialogDescription>
           </DialogHeader>
-          {panel === "connections" ? (
+          {panel === "activity" ? (
+            <GhostActivity />
+          ) : panel === "connections" ? (
             <div className="connection-list">
               <div className="connection-row"><BookOpen/><strong>Public web search</strong><span className="text-signal">Connected</span></div>
               {["Gmail", "Google Calendar", "Google Slides", "TikTok", "X", "Telegram", "WhatsApp Business", "Meta ads"].map(name => <div className="connection-row" key={name}><Plug/><strong>{name}</strong><span>Setup required</span></div>)}
@@ -571,6 +578,7 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
                     />
                   </label>
                   <p className="form-note">{user.email}</p>
+                  <GhostMemories />
                   <div className="mt-5 flex justify-between gap-3">
                     <Button type="submit">
                       <Check />
@@ -693,10 +701,10 @@ function GhostChat({
 }) {
   const [text, setText] = useState("");
   const [phase, setPhase] = useState("");
-  const [tier, setTier] = useState<TierId>("ghost");
+  const [tier, setTier] = useState<TierChoice>("auto");
   useEffect(() => {
     const saved = window.localStorage.getItem("ghost-tier");
-    if (saved && tiers.some((t) => t.id === saved)) setTier(saved as TierId);
+    if (saved && (saved === "auto" || tiers.some((t) => t.id === saved))) setTier(saved as TierChoice);
   }, []);
   const textarea = useRef<HTMLTextAreaElement>(null);
   const started = useRef(false);
@@ -845,12 +853,13 @@ function GhostChat({
                 aria-label="Ghost model"
                 value={tier}
                 onChange={(e) => {
-                  setTier(e.target.value as TierId);
+                  setTier(e.target.value as TierChoice);
                   window.localStorage.setItem("ghost-tier", e.target.value);
                 }}
                 disabled={busy}
                 className="bg-card text-foreground outline-none"
               >
+                <option value="auto">{AUTO_TIER.name}</option>
                 {tiers.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.name}

@@ -866,3 +866,11 @@
 @media (max-width: 1050px) { .ghost-app { grid-template-columns: 210px minmax(0, 1fr); } .studio-library { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 760px) { .ghost-app { display: block; } .workspace-topbar { padding: 0 15px; height: 58px; } .welcome { margin: auto; flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 20px 16px; } .welcome h1 { font-size: 26px; } .quick-actions { gap: 8px; margin-top: 24px; } .quick-actions button { font-size: 11px; padding: 0 10px; } .studio-page { padding: 20px 15px 40px; } .studio-heading h1 { font-size: 22px; } .studio-count { display: none; } .studio-options { gap: 10px; } .studio-generate { margin-left: 0; } .studio-library { grid-template-columns: 1fr; } .composer-context select { max-width: 110px; } .composer-footer span:last-child { display: flex; } }
 @media (max-height: 650px) { .ghost-portrait { width: 48px; height: 48px; margin-bottom: 10px; } .welcome { padding-top: 12px; padding-bottom: 12px; } .quick-actions { margin-top: 18px; } .ghost-sidebar { gap: 13px; } }
+
+.memory-box { margin-top: 1.25rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+.memory-box ul { margin-top: .5rem; display: grid; gap: .35rem; }
+.memory-box li { display: flex; align-items: center; justify-content: space-between; gap: .5rem; font-size: .85rem; background: var(--muted); border-radius: .5rem; padding: .35rem .6rem; }
+.activity-list { display: grid; gap: .6rem; }
+.activity-row { border: 1px solid var(--border); border-radius: .6rem; padding: .6rem .75rem; font-size: .82rem; }
+.activity-row > div { display: flex; justify-content: space-between; gap: .5rem; }
+.activity-row p { color: var(--muted-foreground); margin-top: .2rem; }
