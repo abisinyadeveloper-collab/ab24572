@@ -63,6 +63,42 @@ import { Mic as MicIcon } from "lucide-react";
 import { agents, tiers, AUTO_TIER, type AgentId, type TierId } from "@/lib/ghost";
 import { GhostActivity, GhostMemories } from "./ghost-insights";
 type TierChoice = TierId | "auto";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ChevronDown, AudioLines } from "lucide-react";
+const tierEvent = "ghost-tier-change";
+function useTier(): [TierChoice, (t: TierChoice) => void] {
+  const [tier, setTierState] = useState<TierChoice>("auto");
+  useEffect(() => {
+    const read = () => {
+      const saved = window.localStorage.getItem("ghost-tier");
+      if (saved && (saved === "auto" || tiers.some((t) => t.id === saved))) setTierState(saved as TierChoice);
+    };
+    read();
+    window.addEventListener(tierEvent, read);
+    return () => window.removeEventListener(tierEvent, read);
+  }, []);
+  return [tier, (t) => { window.localStorage.setItem("ghost-tier", t); window.dispatchEvent(new Event(tierEvent)); }];
+}
+function TierPicker() {
+  const [tier, setTier] = useTier();
+  const options = [AUTO_TIER, ...tiers];
+  const current = options.find((o) => o.id === tier) ?? AUTO_TIER;
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button type="button" className="tier-trigger" aria-label="Choose Ghost model">Ghost {current.name} <ChevronDown size={16} /></button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="tier-menu">
+        {options.map((o) => (
+          <DropdownMenuItem key={o.id} onSelect={() => setTier(o.id as TierChoice)} className="tier-option">
+            <span className="tier-check">{o.id === tier && <Check size={18} />}</span>
+            <span><strong>{o.name}</strong><small>{o.label}</small></span>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 import ghostMark from "@/assets/ghost-emblem.jpg";
 
 type Thread = { id: string; title: string; updated_at: string };
@@ -377,14 +413,12 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
               >
                 {mobileOpen ? <X /> : <Menu />}
               </Button>
-              <strong>Ghost</strong>
-              <span className="topbar-section">{view === "chat" ? "" : "Studio"}</span>
+              {view === "chat" ? <TierPicker /> : <strong className="tier-trigger">{view === "image" ? "Images" : "Videos"}</strong>}
             </div>
             <div className="topbar-right">
-              <Button variant="ghost" size="icon-sm" title="Start live voice" aria-label="Start live voice" onClick={() => user ? setVoiceOpen(true) : setAuthOpen(true)}><MicIcon /></Button>
-              <Button variant="ghost" className="model-label" onClick={() => setPanel("models")}>
-                Ghost <ChevronRight size={12} />
-              </Button>
+              <button type="button" className="top-avatar" aria-label="Account" onClick={() => (user ? setPanel("profile") : setAuthOpen(true))}>
+                {avatarSrc ? <img src={avatarSrc} alt="" /> : (displayName || user?.email || "G").slice(0, 1).toUpperCase()}
+              </button>
             </div>
           </header>
           <section className="workspace-body">
@@ -410,20 +444,13 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
               <>
                 <div className="welcome">
                   <div className="welcome-intro">
-                    <img
-                      className="ghost-portrait"
-                      src={ghostMark}
-                      alt="ABISINYA GHOST"
-                      width={140}
-                      height={140}
-                    />
-                    <h1>What’s on your mind?</h1>
-                    <p className="welcome-subtitle">Think it through with Ghost.</p>
+                    <img className="welcome-mark" src={ghostMark} alt="" width={56} height={56} />
+                    <h1>{displayName ? `Hi ${displayName.split(" ")[0]}, what can I run with?` : "What can I run with?"}</h1>
                   </div>
-                  <div className="quick-actions">
-                    <Button variant="outline" onClick={() => setView("image")}><ImagePlus />Create an image</Button>
-                    <Button variant="outline" onClick={() => setView("video")}><Film />Make a video</Button>
-                    <Button variant="outline" onClick={() => user ? setVoiceOpen(true) : setAuthOpen(true)}><MicIcon />Talk to Ghost</Button>
+                  <div className="suggestions">
+                    <button type="button" onClick={() => setView("image")}><ImagePlus />Create an image</button>
+                    <button type="button" onClick={() => setView("video")}><Film />Make a short video</button>
+                    <button type="button" onClick={() => user ? setVoiceOpen(true) : setAuthOpen(true)}><AudioLines />Talk to Ghost in Amharic</button>
                   </div>
                   {threadId && (
                     <p role="status" className="form-note mt-4">
@@ -464,6 +491,8 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
                       await navigate({ to: "/chat/$threadId", params: { threadId: data.id } });
                     }}
                     busy={working}
+                    onPlus={() => setView("image")}
+                    onVoice={() => (user ? setVoiceOpen(true) : setAuthOpen(true))}
                   />
                 </div>
               </>
@@ -647,13 +676,16 @@ function ComposerNote() {
   );
 }
 function StarterComposer({
-  agent,
   onSend,
   busy,
+  onPlus,
+  onVoice,
 }: {
   agent: AgentId;
   onSend: (s: string) => Promise<void>;
   busy: boolean;
+  onPlus: () => void;
+  onVoice: () => void;
 }) {
   const [text, setText] = useState("");
   return (
@@ -666,20 +698,22 @@ function StarterComposer({
       >
         <PromptInputTextarea
           aria-label="Message Ghost"
-          placeholder="Ask Ghost anything…"
+          placeholder="Ask Ghost"
           value={text}
           onChange={(e) => setText(e.target.value)}
           autoFocus
         />
         <PromptInputFooter>
-          <span className="composer-context">
-            <Cpu />
-            {agents.find((a) => a.id === agent)?.name}
-            <span>·</span>Ghost
-          </span>
-          <PromptInputSubmit status={busy ? "submitted" : "ready"} disabled={busy || !text.trim()}>
-            <ArrowUp size={16} />
-          </PromptInputSubmit>
+          <button type="button" className="pill-icon" aria-label="Create an image" onClick={onPlus}><Plus /></button>
+          <span className="flex-1" />
+          <button type="button" className="pill-icon" aria-label="Talk to Ghost" onClick={onVoice}><MicIcon /></button>
+          {text.trim() ? (
+            <PromptInputSubmit status={busy ? "submitted" : "ready"} disabled={busy}>
+              <ArrowUp size={16} />
+            </PromptInputSubmit>
+          ) : (
+            <button type="button" className="pill-live" aria-label="Start live voice" onClick={onVoice}><AudioLines /></button>
+          )}
         </PromptInputFooter>
       </PromptInput>
       <ComposerNote />
@@ -701,11 +735,7 @@ function GhostChat({
 }) {
   const [text, setText] = useState("");
   const [phase, setPhase] = useState("");
-  const [tier, setTier] = useState<TierChoice>("auto");
-  useEffect(() => {
-    const saved = window.localStorage.getItem("ghost-tier");
-    if (saved && (saved === "auto" || tiers.some((t) => t.id === saved))) setTier(saved as TierChoice);
-  }, []);
+  const [tier] = useTier();
   const textarea = useRef<HTMLTextAreaElement>(null);
   const started = useRef(false);
   const transport = useMemo(
@@ -848,24 +878,7 @@ function GhostChat({
                   </option>
                 ))}
               </select>
-              <span>·</span>
-              <select
-                aria-label="Ghost model"
-                value={tier}
-                onChange={(e) => {
-                  setTier(e.target.value as TierChoice);
-                  window.localStorage.setItem("ghost-tier", e.target.value);
-                }}
-                disabled={busy}
-                className="bg-card text-foreground outline-none"
-              >
-                <option value="auto">{AUTO_TIER.name}</option>
-                {tiers.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
+
             </label>
             <PromptInputSubmit
               status={status}
