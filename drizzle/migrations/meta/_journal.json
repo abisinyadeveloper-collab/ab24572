@@ -1,41 +1,5 @@
 {
   "version": "7",
   "dialect": "postgresql",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "7",
-      "when": 1793261313737,
-      "tag": "0000_ghost_private_conversations",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1793263251945,
-      "tag": "0001_ghost_avatar_storage_policies",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1793269248524,
-      "tag": "0002_ghost_media_library",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1793269309646,
-      "tag": "0003_serialize_ghost_video_generation",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1793270924351,
-      "tag": "0004_ghost_memory_activity",
-      "breakpoints": true
-    }
-  ]
+  "entries": []
 }
