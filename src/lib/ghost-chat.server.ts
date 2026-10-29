@@ -10,13 +10,14 @@ import {
 import { z } from "zod";
 import { createResponsesCall } from "./ai/responses";
 import { createLovableAiGatewayRunIdFetch, withLovableAiGatewayRunIdHeader } from "./ai/run-id";
-import { GHOST_MODELS, ghostInstructions, agents, ownsThread } from "./ghost";
+import { GHOST_MODELS, ghostInstructions, agents, ownsThread, getTier } from "./ghost";
 import { wantsWeb, gatherWebContext } from "./ghost-web.server";
 import type { Database, Json } from "@/integrations/supabase/types";
 
 const bodySchema = z.object({
   threadId: z.string().uuid(),
   agent: z.enum(["architect", "coder", "reviewer", "defender", "researcher", "arbiter"]),
+  tier: z.enum(["lite", "ayna", "ghost"]).optional(),
   messages: z
     .array(
       z.object({
@@ -62,6 +63,7 @@ export async function handleGhostChat(request: Request) {
       { status: 400 },
     );
   const { threadId, agent, messages } = parsed.data;
+  const tier = getTier(parsed.data.tier);
   const { data: thread, error: threadError } = await db
     .from("ghost_threads")
     .select("user_id")
@@ -131,15 +133,24 @@ export async function handleGhostChat(request: Request) {
         }
         writer.write({
           type: "data-phase",
-          data: { label: "Astra · Developing a first perspective" },
+          data: { label: tier.synthesize ? "Astra · Developing a first perspective" : `${tier.name} · Thinking` },
           transient: true,
         });
         const draft = createResponsesCall(
           request,
-          { baseURL: "https://ai.gateway.lovable.dev/v1", apiKey: key, model: GHOST_MODELS.draft },
+          { baseURL: "https://ai.gateway.lovable.dev/v1", apiKey: key, model: GHOST_MODELS.draft, effort: tier.effort },
           modelMessages,
           webInstructions,
         );
+        if (!tier.synthesize) {
+          for await (const chunk of draft.result.toUIMessageStream({ sendReasoning: true })) {
+            if (chunk.type !== "error") writer.write(chunk);
+          }
+          const liteText = await draft.result.text;
+          if (!liteText.trim())
+            writer.write({ type: "error", errorText: "Ghost returned no answer. This request has ended." });
+          return;
+        }
         const draftText = await draft.result.text;
         const finish = await draft.result.finishReason;
         if (finish === "content-filter" || !draftText.trim())
@@ -162,7 +173,7 @@ export async function handleGhostChat(request: Request) {
           messages: modelMessages,
           maxRetries: 0,
           abortSignal: request.signal,
-          providerOptions: { anthropic: { thinking: { type: "adaptive" }, effort: "medium" } },
+          providerOptions: { anthropic: { thinking: { type: "adaptive" }, effort: "high" } },
         });
         const responseStream = result.toUIMessageStream({ sendReasoning: true });
         for await (const chunk of responseStream) {
