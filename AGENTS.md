@@ -13,3 +13,4 @@
 - AI providers and safety instructions live in server-only helpers; Astra drafts and Fable synthesizes sequentially, so Ghost is a workflow rather than a claimed trained model.
 - Durable gateway access blocks are stored server-side and checked before any model call; never automatically retry blocked calls.
 
+- Live web/social context comes from Firecrawl search in a server-only helper, injected before drafting, so private connector keys never reach the browser.
