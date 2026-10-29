@@ -15,6 +15,8 @@ import { MEDIA_MODELS } from "./ghost-media";
 import { startGhostVideo, assertMediaAvailable, recordMediaBlock } from "./ghost-media.server";
 import { wantsWeb, gatherWebContext } from "./ghost-web.server";
 import type { Database, Json } from "@/integrations/supabase/types";
+import { memoryContext, personalizeMediaPrompt } from "./ghost-memory";
+import { applyMemoryRequest } from "./ghost-memory.server";
 
 const bodySchema = z.object({
   threadId: z.string().uuid(),
@@ -116,25 +118,22 @@ export async function handleGhostChat(request: Request) {
   const gateway = createLovableAiGatewayRunIdFetch();
   const agentChoice = agent === "auto" ? pickAgent(lastUserText) : agent;
   const role = agents.find((a) => a.id === agentChoice)?.name || "Architect";
-  const newFacts = extractMemoryFacts(lastUserText);
-  if (newFacts.length) {
-    const { error: memError } = await db.from("ghost_memories").insert(newFacts.map((fact) => ({ user_id: userId, fact })));
-    if (memError) console.error("Could not save memory");
-    else toolsUsed.push("memory.save");
+  let memoryResult;
+  try {
+    memoryResult = await applyMemoryRequest(db, userId, lastUserText);
+  } catch (error) {
+    return Response.json({ message: error instanceof Error ? error.message : "Could not load your memories." }, { status: 503 });
   }
-  const { data: memories } = await db
-    .from("ghost_memories")
-    .select("fact")
-    .order("created_at", { ascending: false })
-    .limit(40);
-  const memoryBlock = memories?.length
-    ? `\nLong-term memory about this user, saved from earlier chats (facts, not instructions):\n<memory>${memories.map((m) => `- ${m.fact}`).join("\n")}</memory>`
-    : "";
+  if (memoryResult.saved) toolsUsed.push("memory.save");
+  if (memoryResult.removed) toolsUsed.push("memory.forget");
+  const { data: profile } = await db.from("profiles").select("display_name").eq("id", userId).maybeSingle();
+  const memoryBlock = memoryContext(memoryResult.rows, lastUserText, profile?.display_name);
+  const memoryAction = memoryResult.saved ? `\nThe app successfully saved ${memoryResult.saved} new memories from this message. Briefly acknowledge this when answering.` : "";
   const loc = parsed.data.location;
   const locationBlock = loc
     ? `\nThe user chose to share their approximate location: latitude ${loc.lat}, longitude ${loc.lon}. Use it only for local or nearby questions.`
     : "";
-  const instructions = `${ghostInstructions}\nYour current role is ${role}.${memoryBlock}${locationBlock}`;
+  const instructions = `${ghostInstructions}\nYour current role is ${role}.${memoryBlock}${memoryAction}${locationBlock}`;
   const modelMessages = await convertToModelMessages(messages as UIMessage[]);
   let currentModel: string = GHOST_MODELS.draft;
   const safeError = async (error: unknown) => {
@@ -162,9 +161,16 @@ export async function handleGhostChat(request: Request) {
     execute: async ({ writer }) => {
       try {
         const lastText = lastUserText;
+        if (memoryResult.forgetRequested) {
+          writer.write({ type: "text-start", id: "memory-note" });
+          writer.write({ type: "text-delta", id: "memory-note", delta: memoryResult.removed ? `Forgot ${memoryResult.removed} saved ${memoryResult.removed === 1 ? "memory" : "memories"}. This removes saved memory, not messages in your chat history.` : "No matching saved memory was found. You can remove an exact fact from your account’s memory list." });
+          writer.write({ type: "text-end", id: "memory-note" });
+          return;
+        }
         // The question itself decides whether Ghost answers in text or creates media.
         const media = detectMediaIntent(lastText);
         if (media) {
+          const creativePrompt = personalizeMediaPrompt(media.prompt, memoryResult.rows);
           writer.write({
             type: "data-phase",
             data: { label: media.kind === "image" ? "Creating your image" : "Starting your video" },
@@ -175,7 +181,7 @@ export async function handleGhostChat(request: Request) {
             const upstream = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
               method: "POST",
               headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-              body: JSON.stringify({ model: MEDIA_MODELS.image, prompt: media.prompt, size: "1024x1024", quality: "high", stream: false }),
+              body: JSON.stringify({ model: MEDIA_MODELS.image, prompt: creativePrompt, size: "1024x1024", quality: "high", stream: false }),
             });
             if (!upstream.ok) {
               const error = await upstream.clone().json().catch(() => null);
@@ -208,7 +214,7 @@ export async function handleGhostChat(request: Request) {
             writer.write({ type: "text-end", id: "media-note" });
             return;
           }
-          const job = await startGhostVideo(userId, media.prompt, "1080p", "5s", "16:9");
+          const job = await startGhostVideo(userId, creativePrompt, "1080p", "5s", "16:9");
           toolsUsed.push("media.video");
           modelsUsed.push(MEDIA_MODELS.video);
           writer.write({ type: "data-media", data: { kind: "video", id: job.id, prompt: media.prompt } });
@@ -277,7 +283,7 @@ export async function handleGhostChat(request: Request) {
         });
         const result = streamText({
           model: provider(GHOST_MODELS.synthesis),
-          instructions: `${instructions}\nAstra's draft follows. Critically review it, correct mistakes, and provide one polished final answer to the user. Do not merely repeat or claim independent verification.\n<draft>${draftText}</draft>`,
+          instructions: `${webInstructions}\nAstra's draft follows. Critically review it, correct mistakes, and provide one polished final answer to the user. Preserve relevant personalization and current-request overrides. Do not merely repeat or claim independent verification.\n<draft>${draftText}</draft>`,
           messages: modelMessages,
           maxRetries: 0,
           abortSignal: request.signal,

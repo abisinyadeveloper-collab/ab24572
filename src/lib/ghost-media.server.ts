@@ -2,6 +2,8 @@ import { createClient } from "@supabase/supabase-js";
 import { MEDIA_MODELS } from "./ghost-media";
 import { createVideo, pollVideo, VideoGatewayError } from "./video-jobs.server";
 import type { Database } from "@/integrations/supabase/types";
+import { loadUserMemories } from "./ghost-memory.server";
+import { personalizeMediaPrompt } from "./ghost-memory";
 
 export async function authenticateMedia(request: Request) {
   const token = request.headers.get("authorization");
@@ -32,7 +34,8 @@ export function mediaError(error: unknown) {
 }
 export async function handleGhostImage(request: Request) {
   try {
-    await authenticateMedia(request);
+    const { db, userId } = await authenticateMedia(request);
+    const memories = await loadUserMemories(db, userId);
     const key = await assertMediaAvailable(MEDIA_MODELS.image);
     const editing = request.headers.get("content-type")?.includes("multipart/form-data");
     let body: FormData | string;
@@ -46,13 +49,14 @@ export async function handleGhostImage(request: Request) {
       const stream = form.get("stream") !== "false";
       const safe = new FormData();
       for (const name of ["prompt", "size", "quality"]) { const v = form.get(name); if (typeof v === "string") safe.set(name, v); }
+      safe.set("prompt", personalizeMediaPrompt(prompt, memories));
       safe.set("image", image); safe.set("model", MEDIA_MODELS.image);
       if (stream) { safe.set("stream", "true"); safe.set("partial_images", "1"); }
       body = safe;
     } else {
       const input = await request.json() as { prompt?: string; size?: string; quality?: string; stream?: boolean };
       if (typeof input.prompt !== "string" || !input.prompt.trim() || input.prompt.length > 10000) throw new VideoGatewayError(400, "Add a prompt under 10,000 characters.");
-      body = JSON.stringify({ model: MEDIA_MODELS.image, prompt: input.prompt, size: input.size ?? "1024x1024", quality: input.quality ?? "high", ...(input.stream === false ? {} : { stream: true, partial_images: 1 }) });
+      body = JSON.stringify({ model: MEDIA_MODELS.image, prompt: personalizeMediaPrompt(input.prompt, memories), size: input.size ?? "1024x1024", quality: input.quality ?? "high", ...(input.stream === false ? {} : { stream: true, partial_images: 1 }) });
     }
     const upstream = await fetch(`https://ai.gateway.lovable.dev/v1/images/${editing ? "edits" : "generations"}`, { method: "POST", headers: { Authorization: `Bearer ${key}`, ...(editing ? {} : { "Content-Type": "application/json" }) }, body });
     if (!upstream.ok) {

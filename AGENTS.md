@@ -20,6 +20,7 @@
 - Chat, image studio, and video studio each have a content route and unique metadata; the shared workspace preserves consistent account navigation.
 - Auto tier and memory extraction are deterministic rules in src/lib/ghost.ts (no extra model call), so routing is free, fast and testable.
 - Memories and activity rows are owner-scoped tables written with the caller's own token (chat and voice relay), never the admin client.
+- Shared deterministic memory helpers deduplicate facts, prioritize recent corrections and select relevant personalization; caller-scoped server helpers handle chat saves/forgetting and supply chat, voice reasoning and media so model behavior stays consistent without additional AI calls.
 - External AI clients connect via the app MCP server in src/lib/mcp (OAuth via managed auth, caller-scoped client) so tools always act as the signed-in user under RLS.
 - Native phone shell uses Capacitor loading the hosted site (server.url in capacitor.config.ts) because the app is SSR and can't ship as static files.
 - The launch splash mounts once in the root alongside the workspace, with its own head-loaded stylesheet and a bounded dismissal timer, so navigation and loading failures cannot trap users behind it.
