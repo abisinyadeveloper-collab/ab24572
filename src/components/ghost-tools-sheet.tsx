@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { BookOpen, Camera, Clapperboard, FileText, ImagePlus, Images, Orbit, Paperclip, SquarePen } from "lucide-react";
+import { BookOpen, Camera, Clapperboard, ImagePlus, Images, Orbit, Paperclip, SquarePen } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { compressImage } from "@/lib/device-permissions";
 
@@ -56,7 +56,6 @@ export function ToolsSheet({ open, onOpenChange, onPrompt, onImage, onFileText, 
         <input ref={photos} hidden type="file" accept="image/*" onChange={(e) => void take(e.target.files?.[0])} />
         <input ref={camera} hidden type="file" accept="image/*" capture="environment" onChange={(e) => void take(e.target.files?.[0])} />
         <input ref={files} hidden type="file" accept="image/*,.txt,.md,.csv,.json,.js,.ts,.tsx,.py,.html,.css" onChange={(e) => void take(e.target.files?.[0])} />
-        <FileText className="hidden" />
       </SheetContent>
     </Sheet>
   );
