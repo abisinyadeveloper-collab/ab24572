@@ -12,7 +12,7 @@ export function detectVoiceLanguage(): string {
   if (typeof navigator === "undefined") return "am";
   const tags = navigator.languages?.length ? navigator.languages : [navigator.language];
   for (const tag of tags) {
-    const base = String(tag || "").toLowerCase().split("-")[0];
+    const base = String(tag || "").toLowerCase().split("-")[0] ?? "";
     if (voiceLanguages.some(l => l.id === base)) return base;
   }
   return "am";
