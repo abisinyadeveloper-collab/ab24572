@@ -54,6 +54,8 @@ type ProviderEvent = {
 export function getLiveConfig(): LiveConfig {
   const config: LiveConfig = {
     ...liveSettings,
+    openingInstructions:
+      "Greet the caller warmly in Amharic in one short sentence as ABISINYA GHOST, then ask what they want to work on today. Example: ሰላም! እኔ አቢሲኒያ ጎስት ነኝ። ዛሬ በምን ልረዳዎት?",
     key: process.env["LOVABLE_API_KEY"] ?? "",
   };
   if ([config.baseURL, config.key, config.liveModel, config.backendModel].some((value) => !value)) {
@@ -622,7 +624,7 @@ export function bindLiveConnection(
         }
         starting = true;
         execution.waitUntil(
-          startSession(event.sdp).catch((error) => {
+          verifyCaller(event.token).then(() => startSession(event.sdp)).catch((error) => {
             if (!closing)
               emit({
                 type: "app.error",
@@ -650,4 +652,14 @@ export function bindLiveConnection(
   });
   browser.onClose(stop);
   browser.onError(stop);
+}
+
+// Only signed-in Ghost accounts may open a paid voice call.
+async function verifyCaller(token: unknown) {
+  if (typeof token !== "string" || !token) throw new Error("Please sign in to start a voice call");
+  const url = process.env["SUPABASE_URL"];
+  const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+  if (!url || !key) throw new Error("Voice sign-in check is not configured");
+  const response = await fetch(`${url}/auth/v1/user`, { headers: { apikey: key, Authorization: `Bearer ${token}` } });
+  if (!response.ok) throw new Error("Your session expired. Please sign in again");
 }
