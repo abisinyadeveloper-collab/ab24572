@@ -24,6 +24,9 @@ function VoiceCall() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setToken(data.session?.access_token ?? ""));
+    // Keep the sign-in token fresh so calls never start with an expired session.
+    const { data } = supabase.auth.onAuthStateChange((_e, session) => setToken(session?.access_token ?? ""));
+    return () => data.subscription.unsubscribe();
   }, []);
 
   const onEvent = (event: LiveEvent) => {

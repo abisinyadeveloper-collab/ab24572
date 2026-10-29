@@ -15,6 +15,18 @@ export function GhostMemories() {
     void supabase.from("ghost_memories").select("id,fact").order("created_at", { ascending: false }).limit(40)
       .then(({ data }) => setItems(data ?? []));
   }, []);
+  const [draft, setDraft] = useState("");
+  const [note, setNote] = useState("");
+  async function add() {
+    const fact = draft.trim().slice(0, 500);
+    if (!fact) return;
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) return setNote("Please sign in first.");
+    const { data, error } = await supabase.from("ghost_memories").insert({ user_id: u.user.id, fact }).select("id,fact").single();
+    if (error || !data) return setNote("Could not save that. Try again.");
+    setItems((prev) => [data, ...(prev ?? [])]);
+    setDraft(""); setNote("Saved. Ghost will use this in every chat and call.");
+  }
   async function forget(id: string) {
     const { error } = await supabase.from("ghost_memories").delete().eq("id", id);
     if (!error) setItems((prev) => prev?.filter((m) => m.id !== id) ?? null);
@@ -22,7 +34,12 @@ export function GhostMemories() {
   return (
     <div className="memory-box">
       <strong>What Ghost remembers</strong>
-      <p className="form-note">Say “Remember that…” or tell Ghost about yourself in any chat.</p>
+      <p className="form-note">Say “Remember that…” in any chat or call, or add a fact here.</p>
+      <div className="memory-add">
+        <input aria-label="New memory" value={draft} maxLength={500} placeholder="e.g. I run ABISINIYA STORE" onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void add(); } }} />
+        <Button type="button" size="sm" onClick={() => void add()} disabled={!draft.trim()}>Remember</Button>
+      </div>
+      {note && <p className="form-note">{note}</p>}
       {items === null ? <p className="form-note">Loading…</p> : items.length === 0 ? <p className="form-note">Nothing saved yet.</p> : (
         <ul>
           {items.map((m) => (
