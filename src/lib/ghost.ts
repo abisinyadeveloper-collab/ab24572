@@ -115,9 +115,9 @@ const appLinks: Record<string, string> = {
 export function detectPhoneAction(text: string): PhoneAction | null {
   const t = text.trim().toLowerCase().replace(/^(hey |ok |my )?ghost[,!.]?\s*/, "");
   const num = t.match(/(\+?\d[\d\s-]{5,}\d)/);
-  if (/^(please )?(call|dial|ring|ደውል)/.test(t) && num) return { kind: "call", number: num[1].replace(/[\s-]/g, "") };
-  if (/^(please )?(text|sms|message)/.test(t) && num) return { kind: "sms", number: num[1].replace(/[\s-]/g, "") };
+  if (/^(please )?(call|dial|ring|ደውል)/.test(t) && num) return { kind: "call", number: (num[1] ?? "").replace(/[\s-]/g, "") };
+  if (/^(please )?(text|sms|message)/.test(t) && num) return { kind: "sms", number: (num[1] ?? "").replace(/[\s-]/g, "") };
   const open = t.match(/^(please )?(open|launch|go to|start|scroll|ክፈት)\s+(?:the\s+)?(.+?)(?:\s+app)?(?:\s+(?:videos?|reels|shorts|and.*))?[.!]?$/);
-  if (open) { const app = open[3].trim(); const url = appLinks[app]; if (url) return { kind: "open", app, url }; }
+  if (open) { const app = (open[3] ?? "").trim(); const url = appLinks[app]; if (url) return { kind: "open", app, url }; }
   return null;
 }
