@@ -109,6 +109,8 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
       setThreads([]);
       setDisplayName("");
       setAvatarUrl("");
+      setAvatarPath("");
+      setAvatarSrc("");
       if (threadId) setInitialMessages(null);
       return;
     }
