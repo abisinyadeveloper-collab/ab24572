@@ -48,18 +48,58 @@ function VoiceCall() {
     last.current = role;
   };
 
-  const voice = useLiveVoice({ token, language, onEvent });
+  const voice = useLiveVoice({ token, language, onEvent: (e) => { lastEventAt.current = Date.now(); onEvent(e); } });
   const canStart = voice.status === "idle" || voice.status === "closed";
+  const lastEventAt = useRef(0);
+  const orbRef = useRef<HTMLDivElement>(null);
+  const [phase, setPhase] = useState<"listening" | "thinking" | "speaking">("listening");
+
+  // Drive the orb from Ghost's real output volume and derive listening / thinking / speaking.
+  useEffect(() => {
+    if (voice.status !== "connected") return;
+    let ctx: AudioContext | null = null;
+    let analyser: AnalyserNode | null = null;
+    let raf = 0;
+    const buf = new Uint8Array(256);
+    const tick = () => {
+      const stream = voice.audioRef.current?.srcObject;
+      if (!analyser && stream instanceof MediaStream && stream.getAudioTracks().length) {
+        try {
+          ctx = new AudioContext();
+          analyser = ctx.createAnalyser();
+          analyser.fftSize = 512;
+          ctx.createMediaStreamSource(stream).connect(analyser);
+        } catch { analyser = null; }
+      }
+      let level = 0;
+      if (analyser) {
+        analyser.getByteTimeDomainData(buf);
+        let sum = 0;
+        for (const v of buf) sum += ((v - 128) / 128) ** 2;
+        level = Math.min(1, Math.sqrt(sum / buf.length) * 4);
+      }
+      orbRef.current?.style.setProperty("--level", level.toFixed(3));
+      const recent = Date.now() - lastEventAt.current < 1200;
+      const next = level > 0.04 || (recent && last.current === "assistant") ? "speaking" : recent && last.current === "user" ? "thinking" : "listening";
+      setPhase((p) => (p === next ? p : next));
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => { cancelAnimationFrame(raf); void ctx?.close(); };
+  }, [voice.status, voice.audioRef]);
+
+  const state = voice.error ? "error" : voice.status === "connected" ? (voice.muted ? "muted" : phase) : voice.status;
+  const label: Record<string, string> = { ...statusLabel, listening: "Listening…", thinking: "Thinking…", speaking: "Ghost is speaking", muted: "Microphone muted", error: "Something went wrong" };
 
   return (
     <div className="voice-call">
       <audio ref={voice.audioRef} autoPlay className="hidden" />
       <label className="voice-language">Conversation language<select aria-label="Conversation language" value={language} disabled={!canStart} onChange={e => setLanguage(e.target.value)}>{voiceLanguages.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}</select></label>
-      <div className={`voice-orb ${voice.status === "connected" ? "live" : ""}`}>
-        <Volume2 size={28} />
+      <div ref={orbRef} className={`voice-presence state-${state}`} aria-hidden="true">
+        <span className="ring" /><span className="ring r2" /><span className="core" />
       </div>
       <p role="status" className="voice-status">
-        {statusLabel[voice.status] ?? voice.status}
+        {label[state] ?? state}
       </p>
       {voice.error && (
         <p role="alert" className="voice-error">
@@ -76,7 +116,7 @@ function VoiceCall() {
             }}
             disabled={!token}
           >
-            <Phone /> {token ? "Start call" : "Sign in to call"}
+            <Phone /> {!token ? "Sign in to call" : voice.error ? "Retry call" : "Start call"}
           </Button>
         ) : (
           <>
