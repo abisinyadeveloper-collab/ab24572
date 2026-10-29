@@ -722,6 +722,57 @@ function StarterComposer({
     </>
   );
 }
+type ChatMediaData = { kind: "image" | "video"; path?: string; id?: string; prompt: string };
+function ChatMedia({ media }: { media: ChatMediaData }) {
+  const pollVideo = useServerFn(pollGhostVideo);
+  const [src, setSrc] = useState("");
+  const [status, setStatus] = useState("");
+  const [failure, setFailure] = useState("");
+  useEffect(() => {
+    if (media.kind !== "image" || !media.path) return;
+    let live = true;
+    void supabase.storage.from("ghost-media").createSignedUrl(media.path, 3600).then(({ data }) => {
+      if (live && data) setSrc(data.signedUrl);
+    });
+    return () => { live = false; };
+  }, [media.kind, media.path]);
+  useEffect(() => {
+    if (media.kind !== "video" || !media.id) return;
+    let live = true;
+    let timer: ReturnType<typeof setTimeout>;
+    async function check() {
+      try {
+        const row = (await pollVideo({ data: { id: media.id ?? "" } })) as { status: string; error: string | null; path: string | null };
+        if (!live) return;
+        setStatus(row.status);
+        setFailure(row.error ?? "");
+        if (row.status === "completed" && row.path) {
+          const { data } = await supabase.storage.from("ghost-media").createSignedUrl(row.path, 3600);
+          if (live && data) setSrc(data.signedUrl);
+          return;
+        }
+        if (row.status === "failed") return;
+      } catch {
+        if (live) { setStatus("in_progress"); setFailure(""); }
+      }
+      if (live) timer = setTimeout(check, 8000);
+    }
+    timer = setTimeout(check, 3000);
+    return () => { live = false; clearTimeout(timer); };
+  }, [media.kind, media.id, pollVideo]);
+  if (media.kind === "image") {
+    return src ? <img className="chat-media" src={src} alt={media.prompt} /> : (
+      <div className="chat-media chat-media-pending"><Loader2 className="animate-spin" /><span>Creating your image…</span></div>
+    );
+  }
+  if (src) return <video className="chat-media" src={src} controls preload="metadata" />;
+  return (
+    <div className="chat-media chat-media-pending">
+      {status === "failed" ? <Film /> : <Loader2 className="animate-spin" />}
+      <span>{status === "failed" && failure ? failure : "Your video is generating… it will appear here and in your library."}</span>
+    </div>
+  );
+}
 function GhostChat({
   threadId,
   initialMessages,
