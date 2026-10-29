@@ -319,6 +319,7 @@ export function bindLiveConnection(
   let browserReady = false;
   let language = getVoiceLanguage();
   let caller: Caller | undefined;
+  let memoryNote = "";
   let greetingRequested = false;
   let greetingCommand: { id: string; type: "instructions" | "commentary" } | undefined;
   let greetingTimer: ReturnType<typeof setTimeout> | undefined;
@@ -621,7 +622,7 @@ export function bindLiveConnection(
         type: "session.start",
         session: {
           model: config.liveModel,
-          instructions: `${conversationInstructions.replace("Speak fluent, natural Amharic (አማርኛ) with clear Ethiopian pronunciation by default.", `Speak naturally in ${language.name} by default, with clear pronunciation.`)}\nUse this opening: ${language.greeting}`,
+          instructions: `${conversationInstructions.replace("Speak fluent, natural Amharic (አማርኛ) with clear Ethiopian pronunciation by default.", `Speak naturally in ${language.name} by default, with clear pronunciation.`)}${memoryNote}\nUse this opening: ${language.greeting}`,
           audio: { output: { voice: "marin" } },
           delegation: { type: "client" },
         },
@@ -643,7 +644,7 @@ export function bindLiveConnection(
         starting = true;
         language = getVoiceLanguage(typeof event.language === "string" ? event.language : undefined);
         execution.waitUntil(
-          verifyCaller(event.token).then((c) => { caller = c; return startSession(event.sdp); }).catch((error) => {
+          verifyCaller(event.token).then(async (c) => { caller = c; memoryNote = await loadVoiceMemories(c); return startSession(event.sdp); }).catch((error) => {
             if (!closing)
               emit({
                 type: "app.error",
@@ -686,6 +687,23 @@ async function logVoiceActivity(caller: Caller | undefined, tools: string[], dur
 }
 
 type Caller = { id: string; token: string };
+// Saved facts are read with the caller's own token so RLS keeps them private.
+async function loadVoiceMemories(caller: Caller): Promise<string> {
+  const url = process.env["SUPABASE_URL"];
+  const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+  if (!url || !key) return "";
+  try {
+    const res = await fetch(`${url}/rest/v1/ghost_memories?select=fact&order=created_at.desc&limit=40`, {
+      headers: { apikey: key, Authorization: `Bearer ${caller.token}` },
+    });
+    if (!res.ok) return "";
+    const rows = (await res.json()) as { fact: string }[];
+    if (!rows.length) return "";
+    return `\nFacts the caller asked you to remember (use naturally, never read the list aloud):\n${rows.map((r) => `- ${r.fact}`).join("\n")}`;
+  } catch {
+    return "";
+  }
+}
 async function verifyCaller(token: unknown): Promise<Caller> {
   if (typeof token !== "string" || !token) throw new Error("Please sign in to start a voice call");
   const url = process.env["SUPABASE_URL"];

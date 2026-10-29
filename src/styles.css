@@ -874,3 +874,6 @@
 .activity-row { border: 1px solid var(--border); border-radius: .6rem; padding: .6rem .75rem; font-size: .82rem; }
 .activity-row > div { display: flex; justify-content: space-between; gap: .5rem; }
 .activity-row p { color: var(--muted-foreground); margin-top: .2rem; }
+
+.memory-add { display: flex; gap: .5rem; margin: .5rem 0; }
+.memory-add input { flex: 1; min-width: 0; background: var(--input); color: var(--foreground); border: 1px solid var(--border); border-radius: .5rem; padding: .4rem .6rem; font-size: .875rem; }
