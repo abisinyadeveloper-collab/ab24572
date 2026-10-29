@@ -2,6 +2,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { stepCountIs, streamText, tool, type ModelMessage } from "ai";
 import process from "node:process";
 import { z } from "zod";
+import { getVoiceLanguage } from "./ghost-media";
 
 export type LiveConfig = {
   baseURL: string;
@@ -303,6 +304,7 @@ export function bindLiveConnection(
   let closeTimer: ReturnType<typeof setTimeout> | undefined;
   let finishDrain: (() => void) | undefined;
   let browserReady = false;
+  let language = getVoiceLanguage();
   let greetingRequested = false;
   let greetingCommand: { id: string; type: "instructions" | "commentary" } | undefined;
   let greetingTimer: ReturnType<typeof setTimeout> | undefined;
@@ -337,10 +339,7 @@ export function bindLiveConnection(
   }
 
   function requestGreeting() {
-    const content = (
-      config.openingInstructions ??
-      "Start the conversation now in your configured language and role. Give a brief greeting suited to this app's purpose, ask one relevant opening question, then listen."
-    ).trim();
+    const content = `Begin with this greeting in ${language.name}: ${language.greeting} Then listen.`;
     if (!content || !browserReady || !sessionID || greetingRequested || closing) return;
     greetingRequested = true;
     if (new TextEncoder().encode(content).length > 480) {
@@ -603,7 +602,7 @@ export function bindLiveConnection(
         type: "session.start",
         session: {
           model: config.liveModel,
-          instructions: conversationInstructions,
+          instructions: `${conversationInstructions.replace("Speak fluent, natural Amharic (አማርኛ) with clear Ethiopian pronunciation by default.", `Speak naturally in ${language.name} by default, with clear pronunciation.`)}\nUse this opening: ${language.greeting}`,
           audio: { output: { voice: "marin" } },
           delegation: { type: "client" },
         },
@@ -623,6 +622,7 @@ export function bindLiveConnection(
           throw new Error("Voice startup message required");
         }
         starting = true;
+        language = getVoiceLanguage(typeof event.language === "string" ? event.language : undefined);
         execution.waitUntil(
           verifyCaller(event.token).then(() => startSession(event.sdp)).catch((error) => {
             if (!closing)

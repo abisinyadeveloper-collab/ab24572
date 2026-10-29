@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX ghost_one_active_video ON public.ghost_media (kind) WHERE kind = 'video' AND status IN ('queued','in_progress');

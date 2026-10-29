@@ -27,6 +27,11 @@ import {
   Network,
   Check,
   Loader2,
+  ImagePlus,
+  Film,
+  Plug,
+  Copy,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,6 +58,7 @@ import { Shimmer } from "@/components/ai-elements/shimmer";
 import { supabase } from "@/integrations/supabase/client";
 import { GhostAuth } from "./ghost-auth";
 import { GhostVoiceDialog } from "./ghost-voice";
+import { GhostStudio } from "./ghost-studio";
 import { Mic as MicIcon } from "lucide-react";
 import { agents, tiers, type AgentId, type TierId } from "@/lib/ghost";
 import ghostMark from "@/assets/ghost-emblem.jpg";
@@ -60,7 +66,7 @@ import ghostMark from "@/assets/ghost-emblem.jpg";
 type Thread = { id: string; title: string; updated_at: string };
 const agentIcons = [Workflow, Code2, ScanLine, ShieldCheck, BookOpen, Scale];
 
-export function GhostWorkspace({ threadId }: { threadId?: string }) {
+export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: string; initialView?: "chat" | "image" | "video" }) {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
@@ -69,7 +75,11 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
   const [activeAgent, setActiveAgent] = useState<AgentId>("architect");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [voiceOpen, setVoiceOpen] = useState(false);
-  const [panel, setPanel] = useState<"capabilities" | "models" | "profile" | null>(null);
+  const view = initialView;
+  function setView(next: "chat" | "image" | "video") {
+    void navigate({ to: next === "image" ? "/images" : next === "video" ? "/videos" : "/" });
+  }
+  const [panel, setPanel] = useState<"capabilities" | "models" | "profile" | "connections" | null>(null);
   const [initialMessages, setInitialMessages] = useState<UIMessage[] | null>(threadId ? null : []);
   const [loadError, setLoadError] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -186,6 +196,7 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
       return;
     }
     setMobileOpen(false);
+    setView("chat");
     await navigate({ to: "/chat/$threadId", params: { threadId: data.id } });
   }
   async function deleteThread(id: string) {
@@ -253,36 +264,37 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
           <Link to="/" className="brand" onClick={() => setMobileOpen(false)}>
             <img src={ghostMark} alt="Ghost emblem" width={36} height={39} />
             <div>
-              ABISINYA GHOST<small>INTELLIGENCE, UNBOUND.</small>
+              Ghost<small>ABISINYA</small>
             </div>
           </Link>
           <Button className="new-chat" onClick={newThread} disabled={working}>
             <span className="flex items-center gap-2">
               <Plus size={16} />
-              New conversation
+              New chat
             </span>
             <span className="font-mono text-xs">+</span>
           </Button>
           <div>
             <p className="side-label">WORKSPACE</p>
             <nav className="side-nav">
-              <Button variant="ghost" className="nav-item active" asChild>
-                <Link to="/" onClick={() => setMobileOpen(false)}>
+              <Button variant="ghost" className={`nav-item ${view === "chat" ? "active" : ""}`} asChild>
+                <Link to="/" onClick={() => { setMobileOpen(false); setView("chat"); }}>
                   <MessageSquare />
-                  Ghost console
+                  Chat
                 </Link>
               </Button>
               <Button variant="ghost" className="nav-item" onClick={() => (user ? setVoiceOpen(true) : setAuthOpen(true))}>
                 <MicIcon />
-                Live voice<span className="ml-auto font-mono text-[10px]">አማ</span>
+                Live voice
               </Button>
-              <Button variant="ghost" className="nav-item" onClick={() => setPanel("capabilities")}>
-                <LayoutGrid />
-                Capabilities<span className="ml-auto font-mono text-[10px]">06</span>
+              <Button variant="ghost" className={`nav-item ${view === "image" ? "active" : ""}`} onClick={() => { setView("image"); setMobileOpen(false); }}>
+                <ImagePlus />Images
               </Button>
-              <Button variant="ghost" className="nav-item" onClick={() => setPanel("models")}>
-                <Network />
-                Model collective
+              <Button variant="ghost" className={`nav-item ${view === "video" ? "active" : ""}`} onClick={() => { setView("video"); setMobileOpen(false); }}>
+                <Film />Videos
+              </Button>
+              <Button variant="ghost" className="nav-item" onClick={() => setPanel("connections")}>
+                <Plug />Connections
               </Button>
             </nav>
           </div>
@@ -295,7 +307,7 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
                     className={`thread-link ${threadId === t.id ? "selected" : ""}`}
                     to="/chat/$threadId"
                     params={{ threadId: t.id }}
-                    onClick={() => setMobileOpen(false)}
+                    onClick={() => { setMobileOpen(false); setView("chat"); }}
                   >
                     {t.title}
                   </Link>
@@ -354,30 +366,26 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
               <Button
                 size="icon-sm"
                 variant="ghost"
-                className="mobile-menu"
+                className="md:hidden"
                 aria-label="Open navigation"
                 onClick={() => setMobileOpen(!mobileOpen)}
               >
                 {mobileOpen ? <X /> : <Menu />}
               </Button>
-              <span>Workspace</span>
-              <ChevronRight size={12} />
-              <strong>Ghost console</strong>
+              <strong>Ghost</strong>
+              <span className="topbar-section">{view === "chat" ? "" : "Studio"}</span>
             </div>
             <div className="topbar-right">
-              <span>
-                <i className="status-dot" />
-                WORKSPACE READY
-              </span>
+              <Button variant="ghost" size="icon-sm" title="Start live voice" aria-label="Start live voice" onClick={() => user ? setVoiceOpen(true) : setAuthOpen(true)}><MicIcon /></Button>
               <Button variant="ghost" className="model-label" onClick={() => setPanel("models")}>
-                <Cpu size={13} />
-                GHOST COLLECTIVE
-                <ChevronRight size={10} />
+                Ghost <ChevronRight size={12} />
               </Button>
             </div>
           </header>
           <section className="workspace-body">
-            {threadId && user && initialMessages ? (
+            {view !== "chat" ? (
+              <GhostStudio key={view} userId={user?.id} onSignIn={() => setAuthOpen(true)} initialMode={view} />
+            ) : threadId && user && initialMessages ? (
               <GhostChat
                 key={`${user.id}-${threadId}`}
                 threadId={threadId}
@@ -386,6 +394,13 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
                 onAgentChange={setActiveAgent}
                 onFinish={refreshThreads}
               />
+            ) : threadId ? (
+              <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
+                {!loadError && (user || !authReady) && <Loader2 className="animate-spin text-muted-foreground" />}
+                <p role="status" className="form-note">{loadError || (!authReady ? "Opening your conversation…" : !user ? "Sign in to open your saved conversation." : "Loading your conversation…")}</p>
+                {authReady && !user && <Button onClick={() => setAuthOpen(true)}>Sign in</Button>}
+                {loadError && <Button variant="outline" onClick={() => void navigate({ to: "/" })}>New chat</Button>}
+              </div>
             ) : (
               <>
                 <div className="welcome">
@@ -397,53 +412,13 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
                       width={140}
                       height={140}
                     />
-                    <p className="eyebrow">TWO MODELS. SIX PERSPECTIVES. ONE GHOST.</p>
-                    <h1>
-                      Great things start
-                      <br className="sm:hidden" /> with <span>a thought.</span>
-                    </h1>
-                    <p className="welcome-subtitle">
-                      Your ideas. A different kind of intelligence.
-                      <br />
-                      What are we building today?
-                    </p>
-                    <div className="model-pills">
-                      <span className="model-pill">
-                        <Cpu />
-                        GPT-6 Astra
-                      </span>
-                      <Plus size={10} />
-                      <span className="model-pill">
-                        <Network />
-                        Claude Fable 5.1
-                      </span>
-                      <span>→ GHOST</span>
-                    </div>
+                    <h1>What’s on your mind?</h1>
+                    <p className="welcome-subtitle">Think it through with Ghost.</p>
                   </div>
-                  <div className="agents-heading">
-                    <span>CHOOSE YOUR PERSPECTIVE</span>
-                    <span>06 SPECIALIST ROLES</span>
-                  </div>
-                  <div className="agent-grid">
-                    {agents.map((a, i) => {
-                      const Icon = agentIcons[i] || Workflow;
-                      return (
-                        <Button
-                          variant="ghost"
-                          className={`agent-card ${a.id === activeAgent ? "chosen" : ""}`}
-                          key={a.id}
-                          onClick={() => {
-                            setActiveAgent(a.id);
-                            document.querySelector<HTMLTextAreaElement>("textarea")?.focus();
-                          }}
-                        >
-                          <Icon className="agent-icon" />
-                          <ArrowUpRight className="agent-arrow" />
-                          <span className="agent-title">{a.name}</span>
-                          <span className="agent-desc">{a.description}</span>
-                        </Button>
-                      );
-                    })}
+                  <div className="quick-actions">
+                    <Button variant="outline" onClick={() => setView("image")}><ImagePlus />Create an image</Button>
+                    <Button variant="outline" onClick={() => setView("video")}><Film />Make a video</Button>
+                    <Button variant="outline" onClick={() => user ? setVoiceOpen(true) : setAuthOpen(true)}><MicIcon />Talk to Ghost</Button>
                   </div>
                   {threadId && (
                     <p role="status" className="form-note mt-4">
@@ -489,13 +464,6 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
               </>
             )}
           </section>
-          <footer className="bottom-strip">
-            <span>
-              <span className="signal">◇</span> ABISINYA GHOST{" "}
-              <span className="ml-2">/ INTELLIGENCE WORKSPACE</span>
-            </span>
-            <span>BUILT FOR THE POSSIBILITIES.</span>
-          </footer>
         </main>
       </div>
       <GhostAuth open={authOpen} onOpenChange={setAuthOpen} />
@@ -510,20 +478,26 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
           <DialogHeader>
             <DialogTitle>
               {panel === "models"
-                ? "The Ghost collective"
+                ? "Ghost models"
                 : panel === "profile"
                   ? "Your account"
-                  : "Ghost capabilities"}
+                  : panel === "connections" ? "Connections" : "About Ghost"}
             </DialogTitle>
             <DialogDescription>
               {panel === "models"
-                ? "Two frontier models. One considered response."
+                ? "Lite, Ayna, and Ghost."
                 : panel === "profile"
                   ? "Make this workspace yours."
-                  : "Six perspectives for safe, thoughtful work."}
+                  : panel === "connections" ? "Your services, connected to Ghost." : "Your personal AI assistant."}
             </DialogDescription>
           </DialogHeader>
-          {panel === "models" ? (
+          {panel === "connections" ? (
+            <div className="connection-list">
+              <div className="connection-row"><BookOpen/><strong>Public web search</strong><span className="text-signal">Connected</span></div>
+              {["Gmail", "Google Calendar", "Google Slides", "TikTok", "X", "Telegram", "WhatsApp Business", "Meta ads"].map(name => <div className="connection-row" key={name}><Plug/><strong>{name}</strong><span>Setup required</span></div>)}
+              <p className="form-note">A workspace owner must configure each service before you can connect your own account. Ghost never uses someone else’s private accounts.</p>
+            </div>
+          ) : panel === "models" ? (
             <>
               <div className="capability-row">
                 <span className="capability-status">01 / DRAFT & REASON</span>
@@ -541,7 +515,7 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
               </div>
               <p className="form-note">
                 Ghost coordinates existing models; it is not a newly trained model. Both calls use
-                AI credits. No external tools, code execution, or live web access are connected.
+                AI credits. Public web search is connected; Ghost does not run code on your computer.
               </p>
             </>
           ) : panel === "profile" ? (
@@ -684,7 +658,7 @@ function StarterComposer({
       >
         <PromptInputTextarea
           aria-label="Message Ghost"
-          placeholder="Give your next idea a starting point…"
+          placeholder="Ask Ghost anything…"
           value={text}
           onChange={(e) => setText(e.target.value)}
           autoFocus
@@ -693,7 +667,7 @@ function StarterComposer({
           <span className="composer-context">
             <Cpu />
             {agents.find((a) => a.id === agent)?.name}
-            <span>·</span>Ghost collective
+            <span>·</span>Ghost
           </span>
           <PromptInputSubmit status={busy ? "submitted" : "ready"} disabled={busy || !text.trim()}>
             <ArrowUp size={16} />
@@ -754,7 +728,7 @@ function GhostChat({
       }),
     [threadId, agent, tier],
   );
-  const { messages, sendMessage, status, error, stop } = useChat({
+  const { messages, sendMessage, status, error, stop, regenerate } = useChat({
     id: threadId,
     messages: initialMessages,
     transport,
@@ -801,7 +775,7 @@ function GhostChat({
               {m.role === "assistant" && (
                 <div className="message-label">
                   <img src={ghostMark} alt="" width={24} height={24} />
-                  GHOST<span className="text-muted-foreground">/ COLLECTIVE</span>
+                  Ghost
                 </div>
               )}
               <MessageContent>
@@ -816,6 +790,7 @@ function GhostChat({
                   ) : null,
                 )}
               </MessageContent>
+              {m.role === "assistant" && !busy && <div className="message-actions"><Button size="icon-sm" variant="ghost" title="Copy answer" aria-label="Copy answer" onClick={() => void navigator.clipboard.writeText(m.parts.filter(p => p.type === "text").map(p => p.text).join("\n"))}><Copy/></Button>{m.id === messages.at(-1)?.id && <Button size="icon-sm" variant="ghost" title="Regenerate answer" aria-label="Regenerate answer" onClick={() => void regenerate()}><RotateCcw/></Button>}</div>}
             </Message>
           ))}
           {busy && (
@@ -878,7 +853,7 @@ function GhostChat({
               >
                 {tiers.map((t) => (
                   <option key={t.id} value={t.id}>
-                    {t.name} — {t.label}
+                    {t.name}
                   </option>
                 ))}
               </select>

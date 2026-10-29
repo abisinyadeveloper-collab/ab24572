@@ -35,6 +35,42 @@ export type Database = {
         }
         Relationships: []
       }
+      ghost_media: {
+        Row: {
+          created_at: string
+          error: string | null
+          gateway_id: string | null
+          id: string
+          kind: string
+          path: string | null
+          prompt: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          gateway_id?: string | null
+          id?: string
+          kind: string
+          path?: string | null
+          prompt: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          gateway_id?: string | null
+          id?: string
+          kind?: string
+          path?: string | null
+          prompt?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ghost_threads: {
         Row: {
           id: string
