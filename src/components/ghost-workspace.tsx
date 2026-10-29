@@ -450,6 +450,8 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
                 agent={activeAgent}
                 onAgentChange={setActiveAgent}
                 onFinish={refreshThreads}
+                onVoice={() => setVoiceOpen(true)}
+                onStudio={() => setView("image")}
               />
             ) : threadId ? (
               <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
@@ -816,7 +818,11 @@ function GhostChat({
   agent,
   onAgentChange,
   onFinish,
+  onVoice,
+  onStudio,
 }: {
+  onVoice: () => void;
+  onStudio: () => void;
   threadId: string;
   initialMessages: UIMessage[];
   agent: AgentChoice;
@@ -831,7 +837,7 @@ function GhostChat({
   const [attachment, setAttachment] = useState("");
   const [attachError, setAttachError] = useState("");
   const location = useRef<{ lat: number; lon: number } | null>(null);
-  const cameraInput = useRef<HTMLInputElement>(null);
+  const [sheet, setSheet] = useState(false);
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
@@ -980,38 +986,25 @@ function GhostChat({
             ref={textarea}
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Continue the conversation…"
+            placeholder="Ask Ghost"
             aria-label="Message Ghost"
             autoFocus
           />
           <PromptInputFooter>
-            <label className="composer-context">
-              <Cpu />
-              <select
-                aria-label="Agent perspective"
-                value={agent}
-                onChange={(e) => onAgentChange(e.target.value as AgentChoice)}
-                disabled={busy}
-                className="bg-card text-foreground outline-none"
-              >
-                <option value="auto">{AUTO_AGENT.name}</option>
-                {agents.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name}
-                  </option>
-                ))}
-              </select>
-
-            </label>
-            <input ref={cameraInput} type="file" accept="image/*" capture="environment" className="sr-only" onChange={async (e) => {
-              const f = e.target.files?.[0]; e.target.value = "";
-              if (!f) return;
-              try { setAttachError(""); setAttachment(await compressImage(f)); } catch (err) { setAttachError(err instanceof Error ? err.message : "Could not use that photo."); }
-            }} />
-            <button type="button" className="pill-icon" aria-label="Take or attach a photo" title="Camera" disabled={busy} onClick={() => cameraInput.current?.click()}><CameraIcon /></button>
-            <button type="button" className="pill-icon" aria-label="Share your screen" title="Share screen" disabled={busy} onClick={async () => {
-              try { setAttachError(""); setAttachment(await captureScreen()); } catch (err) { if (!(err instanceof DOMException && err.name === "NotAllowedError")) setAttachError(err instanceof Error ? err.message : "Screen share failed."); }
-            }}><MonitorUp /></button>
+            <button type="button" className="pill-icon" aria-label="More options" onClick={() => setSheet(true)}><Plus /></button>
+            <ToolsSheet
+              open={sheet}
+              onOpenChange={setSheet}
+              onPrompt={(p) => { setText(p); setSheet(false); }}
+              onImage={(url) => { setAttachment(url); setSheet(false); }}
+              onFileText={(name, body) => { setText((t) => `${t}\n\n[File: ${name}]\n${body.slice(0, 20000)}`.trim()); setSheet(false); }}
+              onStudio={() => { setSheet(false); onStudio(); }}
+            />
+            <span className="flex-1" />
+            <button type="button" className="pill-icon" aria-label="Talk to Ghost" onClick={onVoice}><MicIcon /></button>
+            {!busy && !text.trim() && !attachment ? (
+              <button type="button" className="pill-live" aria-label="Start live voice" onClick={onVoice}><AudioLines /></button>
+            ) : (
             <PromptInputSubmit
               status={status}
               onStop={() => {
@@ -1020,6 +1013,7 @@ function GhostChat({
               }}
               disabled={!busy && !text.trim() && !attachment}
             />
+            )}
           </PromptInputFooter>
         </PromptInput>
         <ComposerNote />
