@@ -150,15 +150,15 @@ export async function handleGhostChat(request: Request) {
           abortSignal: request.signal,
           providerOptions: { anthropic: { thinking: { type: "adaptive" }, effort: "medium" } },
         });
-        writer.merge(
-          result.toUIMessageStream({
-            sendReasoning: true,
-            onError: (e) => {
-              void safeError(e);
-              return "The synthesis request failed. See the request status before trying again.";
-            },
-          }),
-        );
+        const responseStream = result.toUIMessageStream({ sendReasoning: true });
+        for await (const chunk of responseStream) {
+          if (chunk.type !== "error") writer.write(chunk);
+        }
+        // Await the final text so upstream errors reach the durable pause handler.
+        const finalText = await result.text;
+        if (!finalText.trim()) {
+          writer.write({ type: "error", errorText: "The synthesis model returned no answer. This request has ended." });
+        }
       } catch (e) {
         const reason = await safeError(e);
         writer.write({ type: "error", errorText: reason });
