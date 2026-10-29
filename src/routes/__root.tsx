@@ -13,6 +13,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import splashCss from "../components/ghost-splash.css?url";
 import { GhostSplash } from "@/components/ghost-splash";
+import { registerGhostWorker } from "@/lib/pwa-register";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -84,11 +85,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: 'description', content: 'Your workspace for thoughtful coding, planning, and defensive analysis.' },
       { property: 'og:type', content: 'website' },
       { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'theme-color', content: '#f8faff' },
     ],
     links: [
       { rel: 'stylesheet', href: appCss },
       { rel: 'stylesheet', href: splashCss },
       { rel: 'icon', href: '/favicon.png', type: 'image/png' },
+      { rel: 'manifest', href: '/manifest.webmanifest' },
+      { rel: 'apple-touch-icon', href: '/favicon.png' },
       { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
       { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
       { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap' },
@@ -116,6 +120,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => { void registerGhostWorker(); }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

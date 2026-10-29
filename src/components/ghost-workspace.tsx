@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useChat } from "@ai-sdk/react";
+import { cacheThreads, cachedThreads, cacheMessages, cachedMessages, queueMessage, queuedMessages, shiftQueue, isOffline, type QueuedMessage } from "@/lib/offline-cache";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import type { User } from "@supabase/supabase-js";
 import {
@@ -147,9 +148,9 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
   const [working, setWorking] = useState(false);
   useEffect(() => {
     let live = true;
-    void supabase.auth.getUser().then(({ data }) => {
+    void supabase.auth.getSession().then(({ data }) => {
       if (live) {
-        setUser(data.user);
+        setUser(data.session?.user ?? null);
         setAuthReady(true);
       }
     });
@@ -169,8 +170,13 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
       .from("ghost_threads")
       .select("id,title,updated_at")
       .order("updated_at", { ascending: false });
-    if (error) setLoadError(error.message);
-    else setThreads(data || []);
+    if (error) {
+      if (user && cachedThreads(user.id).length) setThreads(cachedThreads(user.id));
+      else setLoadError(error.message);
+    } else {
+      setThreads(data || []);
+      if (user) cacheThreads(user.id, data || []);
+    }
   }
   useEffect(() => {
     let live = true;
@@ -189,8 +195,14 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
       .order("updated_at", { ascending: false })
       .then(({ data, error }) => {
         if (live) {
-          if (error) setLoadError(error.message);
-          else setThreads(data || []);
+          if (error) {
+            const offline = cachedThreads(user.id);
+            if (offline.length) setThreads(offline);
+            else setLoadError(error.message);
+          } else {
+            setThreads(data || []);
+            cacheThreads(user.id, data || []);
+          }
         }
       });
     void supabase
@@ -224,11 +236,15 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
         .single()
         .then(({ data, error }) => {
           if (live) {
-            if (error) setLoadError("This conversation is unavailable.");
-            else
-              setInitialMessages(
-                (Array.isArray(data.messages) ? data.messages : []) as unknown as UIMessage[],
-              );
+            const offline = cachedMessages(threadId);
+            if (error) {
+              if (offline) setInitialMessages(offline as UIMessage[]);
+              else setLoadError(isOffline() ? "You're offline and this chat isn't saved on this device yet." : "This conversation is unavailable.");
+            } else {
+              const rows = (Array.isArray(data.messages) ? data.messages : []) as unknown as UIMessage[];
+              cacheMessages(threadId, rows);
+              setInitialMessages(rows);
+            }
           }
         });
     return () => {
@@ -888,6 +904,34 @@ function GhostChat({
     },
   });
   const busy = status === "submitted" || status === "streaming";
+  const [queued, setQueued] = useState<QueuedMessage[]>([]);
+  const [offline, setOffline] = useState(false);
+  useEffect(() => {
+    if (messages.length && !busy) cacheMessages(threadId, messages);
+  }, [messages, busy, threadId]);
+  useEffect(() => {
+    setQueued(queuedMessages(threadId));
+    setOffline(isOffline());
+    const flush = async () => {
+      setOffline(false);
+      let next = shiftQueue(threadId);
+      while (next) {
+        setQueued(queuedMessages(threadId));
+        await sendMessage({ text: next.text });
+        if (isOffline()) break;
+        next = shiftQueue(threadId);
+      }
+      setQueued(queuedMessages(threadId));
+    };
+    const down = () => setOffline(true);
+    window.addEventListener("online", flush);
+    window.addEventListener("offline", down);
+    if (!isOffline() && queuedMessages(threadId).length) void flush();
+    return () => {
+      window.removeEventListener("online", flush);
+      window.removeEventListener("offline", down);
+    };
+  }, [threadId, sendMessage]);
   useEffect(() => {
     if (!busy) textarea.current?.focus();
   }, [busy]);
@@ -943,6 +987,14 @@ function GhostChat({
               {m.role === "assistant" && !busy && <div className="message-actions"><Button size="icon-sm" variant="ghost" title="Copy answer" aria-label="Copy answer" onClick={() => void navigator.clipboard.writeText(m.parts.filter(p => p.type === "text").map(p => p.text).join("\n"))}><Copy/></Button>{typeof navigator !== "undefined" && "share" in navigator && <Button size="icon-sm" variant="ghost" title="Share answer" aria-label="Share answer" onClick={() => void navigator.share({ title: "Ghost", text: m.parts.filter(p => p.type === "text").map(p => p.text).join("\n") }).catch(() => {})}><Share2/></Button>}{m.id === messages.at(-1)?.id && <Button size="icon-sm" variant="ghost" title="Regenerate answer" aria-label="Regenerate answer" onClick={() => void regenerate()}><RotateCcw/></Button>}</div>}
             </Message>
           ))}
+          {queued.map((q) => (
+            <Message key={q.id} from="user">
+              <MessageContent>
+                <MessageResponse>{q.text}</MessageResponse>
+                <span className="form-note">Waiting for internet — sends automatically</span>
+              </MessageContent>
+            </Message>
+          ))}
           {busy && (
             <div className="chat-waiting">
               <Shimmer>{phase || "Ghost is considering your message…"}</Shimmer>
@@ -953,6 +1005,7 @@ function GhostChat({
       </Conversation>
       <div className="composer-region">
         {attachError && <p role="alert" className="chat-error">{attachError}</p>}
+        {offline && <p role="status" className="form-note text-center">You're offline. Past chats still open, and new messages send when you reconnect.</p>}
         {error && (
           <p role="alert" className="chat-error">
             {error.message}
@@ -964,6 +1017,11 @@ function GhostChat({
             if ((!submitted.trim() && !attachment) || busy) return;
             const action = detectPhoneAction(submitted);
             if (action) runPhoneAction(action);
+            if (isOffline()) {
+              setQueued(queueMessage(threadId, submitted.trim()));
+              setText("");
+              return;
+            }
             const image = attachment;
             setText("");
             setAttachment("");

@@ -1,0 +1,13 @@
+{
+  "name": "ABISINYA GHOST",
+  "short_name": "Ghost",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8faff",
+  "theme_color": "#f8faff",
+  "icons": [
+    { "src": "/favicon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
