@@ -398,7 +398,16 @@ function createLiveVoice(options: LiveOptions) {
         release();
       };
     } catch (error) {
-      fail(error instanceof Error ? error.message : "Microphone startup failed");
+      const name = error instanceof DOMException ? error.name : "";
+      const friendly =
+        name === "NotFoundError" || name === "OverconstrainedError"
+          ? "No microphone found. Plug in or turn on a microphone (or open Ghost on your phone), then tap Retry call."
+          : name === "NotAllowedError" || name === "SecurityError"
+            ? "Microphone access is blocked. Allow the microphone in your browser's site settings, then tap Retry call."
+            : name === "NotReadableError"
+              ? "Your microphone is being used by another app. Close it, then tap Retry call."
+              : error instanceof Error ? error.message : "Microphone startup failed";
+      fail(friendly);
     }
   }
 
