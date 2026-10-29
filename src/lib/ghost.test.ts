@@ -47,3 +47,13 @@ describe("media intent from the question", () => {
   it("ignores ordinary questions", () => expect(detectMediaIntent("What is the capital of Kenya?")).toBeNull());
   it("ignores design work without media", () => expect(detectMediaIntent("Design a database schema for orders")).toBeNull());
 });
+
+import { detectPhoneAction as dpa, detectMediaIntent as dmi } from "./ghost";
+describe("phone actions", () => {
+  it("opens tiktok", () => expect(dpa("my ghost open tiktok")).toMatchObject({ kind: "open", app: "tiktok" }));
+  it("scrolls tiktok videos", () => expect(dpa("scroll tiktok videos")).toMatchObject({ kind: "open", app: "tiktok" }));
+  it("calls a number", () => expect(dpa("call 0911 234 567")).toEqual({ kind: "call", number: "0911234567" }));
+  it("ignores normal chat", () => expect(dpa("how do I open a bank account")).toBeNull());
+  it("detects build an image", () => expect(dmi("build an login page image")?.kind).toBe("image"));
+  it("detects amharic image", () => expect(dmi("የአንበሳ ምስል ፍጠር")?.kind).toBe("image"));
+});
