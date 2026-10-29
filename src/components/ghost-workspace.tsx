@@ -450,6 +450,8 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
                 agent={activeAgent}
                 onAgentChange={setActiveAgent}
                 onFinish={refreshThreads}
+                onVoice={() => setVoiceOpen(true)}
+                onStudio={() => setView("image")}
               />
             ) : threadId ? (
               <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
