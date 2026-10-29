@@ -325,8 +325,8 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
               onClick={() => (user ? setPanel("profile") : setAuthOpen(true))}
             >
               <span className="account-avatar">
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt="Your avatar" referrerPolicy="no-referrer" />
+                {avatarSrc ? (
+                  <img src={avatarSrc} alt="Your avatar" referrerPolicy="no-referrer" />
                 ) : (
                   <Fingerprint size={16} />
                 )}
@@ -548,13 +548,44 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
                       onChange={(e) => setDisplayName(e.target.value)}
                     />
                   </label>
+                  <div className="form-field">
+                    Profile photo
+                    <div className="avatar-upload">
+                      {avatarSrc ? (
+                        <img src={avatarSrc} alt="Your avatar" referrerPolicy="no-referrer" />
+                      ) : (
+                        <span className="avatar-placeholder">
+                          {(displayName || user.email || "G").slice(0, 1).toUpperCase()}
+                        </span>
+                      )}
+                      <label className="avatar-upload-btn">
+                        {avatarUploading ? <Loader2 className="animate-spin" /> : <Plus />}
+                        {avatarUploading ? "Uploading…" : "Upload photo"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="sr-only"
+                          disabled={avatarUploading}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) void uploadAvatar(file);
+                            e.target.value = "";
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
                   <label className="form-field">
-                    Avatar image address
+                    Or paste an image address
                     <input
                       type="url"
                       placeholder="https://…"
                       value={avatarUrl}
-                      onChange={(e) => setAvatarUrl(e.target.value)}
+                      onChange={(e) => {
+                        setAvatarUrl(e.target.value);
+                        setAvatarPath("");
+                        setAvatarSrc(e.target.value);
+                      }}
                     />
                   </label>
                   <p className="form-note">{user.email}</p>
