@@ -893,3 +893,8 @@ body, .ghost-app, .workspace { background: var(--background); color: var(--foreg
 .quick-actions button, .quick-actions a { border-radius: 999px !important; background: var(--card); border: 1px solid var(--border) !important; }
 .modal-panel, [role="dialog"] { border-radius: 24px !important; }
 .side-label { text-transform: none; letter-spacing: 0; font-family: var(--font-sans); }
+.nav-item { justify-content: flex-start !important; padding-inline: 16px !important; width: 100%; font-size: 15px; }
+.new-chat { color: var(--foreground) !important; font-weight: 500; justify-content: flex-start !important; }
+.workspace-topbar button, .model-label { font-family: var(--font-sans) !important; border-radius: 999px !important; }
+.composer:focus-within { border-color: var(--border) !important; outline: none; box-shadow: var(--panel-shadow); }
+.side-label { font-size: 13px; color: var(--muted-foreground); }
