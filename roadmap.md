@@ -1,15 +1,3 @@
-# ABISINYA GHOST
-- [x] Create safe Ghost workspace and agent roles.
-- [x] Add account sign-in, profile details, and private saved conversations.
-- [x] Connect GPT-6 Astra and Claude Fable 5.1 with truthful two-model workflow.
-- [x] Verify live replies, history isolation, and desktop/mobile layout.
-- [x] Polish Ghost branding and chat layout.
-- [x] Add account-saved image creation, editing, and video generation; verified actual images, edits, and a saved MP4.
-- [x] Add multilingual live voice selection; Amharic remains the default.
-- [x] Verify media services and surface connector setup status.
-- [ ] Verify audible live conversation — sandbox browser network setup times out before reaching the voice service.
-- [ ] Connect personal services — workspace owner must configure OAuth clients; Gmail, TikTok, and X have none configured.
-- [x] Auto tier: Ghost picks Lite/Ayna/Ghost per question.
-- [x] Long-term memory across chats (view/delete in account panel).
-- [x] Voice tools: web search during calls.
-- [x] Activity log page (tier, models, tools, speed, tokens).
+# Roadmap
+- [x] Agent integrations (MCP) with sign-in consent
+- [x] Modern live voice: reactive orb, clear states (connecting/listening/thinking/speaking/error), retry

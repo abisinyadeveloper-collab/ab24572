@@ -930,3 +930,22 @@ body, .ghost-app, .workspace { background: var(--background); color: var(--foreg
 .pill-icon svg, .pill-live svg { width: 22px; height: 22px; }
 .pill-live { width: 46px; height: 46px; border-radius: 999px; border: 0; background: var(--accent); color: var(--primary); display: grid; place-items: center; cursor: pointer; }
 .composer textarea { font-size: 17px !important; }
+
+/* Live voice presence orb — reacts to Ghost's voice level (--level) and call state */
+.voice-presence { --level: 0; position: relative; width: 148px; height: 148px; display: grid; place-items: center; margin: 0.5rem auto; }
+.voice-presence .core { width: 84px; height: 84px; border-radius: 9999px; background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--primary) 55%, var(--background)), var(--primary) 60%, color-mix(in oklab, var(--primary) 70%, var(--accent))); box-shadow: 0 10px 40px color-mix(in oklab, var(--primary) 35%, transparent); transform: scale(calc(0.92 + var(--level) * 0.35)); transition: transform 80ms linear, filter .4s, opacity .4s; }
+.voice-presence .ring { position: absolute; inset: 22px; border-radius: 9999px; border: 2px solid color-mix(in oklab, var(--primary) 30%, transparent); opacity: 0; }
+.voice-presence.state-idle .core, .voice-presence.state-closed .core { filter: saturate(.5); opacity: .75; animation: orb-breathe 4s ease-in-out infinite; }
+.voice-presence.state-connecting .ring { opacity: 1; border-top-color: var(--primary); animation: orb-spin 1s linear infinite; }
+.voice-presence.state-connecting .core { transform: scale(.8); opacity: .6; }
+.voice-presence.state-listening .ring { animation: orb-ripple 2.2s ease-out infinite; }
+.voice-presence.state-listening .r2 { animation-delay: 1.1s; }
+.voice-presence.state-thinking .core { animation: orb-swirl 1.6s ease-in-out infinite; }
+.voice-presence.state-speaking .ring { opacity: calc(.25 + var(--level)); transform: scale(calc(1 + var(--level) * .5)); }
+.voice-presence.state-muted .core { filter: grayscale(1); opacity: .5; }
+.voice-presence.state-error .core { background: var(--destructive); opacity: .7; }
+@keyframes orb-breathe { 50% { transform: scale(.97); } }
+@keyframes orb-spin { to { transform: rotate(360deg); } }
+@keyframes orb-ripple { from { opacity: .7; transform: scale(.9); } to { opacity: 0; transform: scale(1.55); } }
+@keyframes orb-swirl { 0%,100% { transform: scale(.9) rotate(0); border-radius: 50%; } 50% { transform: scale(.96) rotate(180deg); border-radius: 44% 56% 52% 48%; } }
+@media (prefers-reduced-motion: reduce) { .voice-presence * { animation: none !important; } }
