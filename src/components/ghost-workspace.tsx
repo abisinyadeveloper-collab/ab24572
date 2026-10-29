@@ -71,6 +71,9 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
   const [loadError, setLoadError] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [avatarPath, setAvatarPath] = useState("");
+  const [avatarSrc, setAvatarSrc] = useState("");
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [profileNote, setProfileNote] = useState("");
   const [working, setWorking] = useState(false);
   useEffect(() => {
