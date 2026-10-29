@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from "vitest";
 import { zipSync, strToU8 } from "fflate";
 import { readGhostFile } from "./ghost-files";
