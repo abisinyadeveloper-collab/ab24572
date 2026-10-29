@@ -104,6 +104,7 @@ function TierPicker() {
 import ghostMark from "@/assets/ghost-emblem.jpg";
 import { useWebMCP } from "use-webmcp-tool";
 import { GhostPermissions } from "./ghost-permissions";
+import { ToolsSheet } from "./ghost-tools-sheet";
 import { Camera as CameraIcon, MonitorUp, Share2, X as XIcon } from "lucide-react";
 import { haptic, notify, currentLocation, compressImage, captureScreen, runPhoneAction } from "@/lib/device-permissions";
 import { detectPhoneAction } from "@/lib/ghost";
@@ -488,7 +489,7 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
                   )}
                   <StarterComposer
                     agent={activeAgent}
-                    onSend={async (text) => {
+                    onSend={async (text, image) => {
                       if (!user) {
                         setAuthOpen(true);
                         return;
@@ -505,6 +506,7 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
                         return;
                       }
                       sessionStorage.setItem(`ghost-draft-${data.id}`, text);
+                      if (image) sessionStorage.setItem(`ghost-draft-img-${data.id}`, image);
                       await navigate({ to: "/chat/$threadId", params: { threadId: data.id } });
                     }}
                     busy={working}
@@ -700,12 +702,14 @@ function StarterComposer({
   onVoice,
 }: {
   agent: AgentChoice;
-  onSend: (s: string) => Promise<void>;
+  onSend: (s: string, image?: string) => Promise<void>;
   busy: boolean;
   onPlus: () => void;
   onVoice: () => void;
 }) {
   const [text, setText] = useState("");
+  const [sheet, setSheet] = useState(false);
+  const [image, setImage] = useState("");
   return (
     <>
       <PromptInput
@@ -713,9 +717,16 @@ function StarterComposer({
         onSubmit={async ({ text: submitted }) => {
           const action = detectPhoneAction(submitted);
           if (action) runPhoneAction(action);
-          if (submitted.trim()) await onSend(submitted.trim());
+          const body = submitted.trim() || (image ? "What do you see in this image?" : "");
+          if (body) { await onSend(body, image || undefined); setImage(""); }
         }}
       >
+        {image && (
+          <div className="chat-attachment">
+            <img src={image} alt="Attached" />
+            <button type="button" aria-label="Remove attachment" onClick={() => setImage("")}><XIcon size={14} /></button>
+          </div>
+        )}
         <PromptInputTextarea
           aria-label="Message Ghost"
           placeholder="Ask Ghost"
@@ -724,19 +735,18 @@ function StarterComposer({
           autoFocus
         />
         <PromptInputFooter>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button type="button" className="pill-icon" aria-label="More options"><Plus /></button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem onSelect={() => setText("Create an image of ")}>Create an image in chat</DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setText("Make a video of ")}>Create a video in chat</DropdownMenuItem>
-              <DropdownMenuItem onSelect={onPlus}>Open image studio</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <button type="button" className="pill-icon" aria-label="More options" onClick={() => setSheet(true)}><Plus /></button>
+          <ToolsSheet
+            open={sheet}
+            onOpenChange={setSheet}
+            onPrompt={(p) => { setText(p); setSheet(false); }}
+            onImage={(url) => { setImage(url); setSheet(false); }}
+            onFileText={(name, body) => { setText((t) => `${t}\n\n[File: ${name}]\n${body.slice(0, 20000)}`.trim()); setSheet(false); }}
+            onStudio={() => { setSheet(false); onPlus(); }}
+          />
           <span className="flex-1" />
           <button type="button" className="pill-icon" aria-label="Talk to Ghost" onClick={onVoice}><MicIcon /></button>
-          {text.trim() ? (
+          {text.trim() || image ? (
             <PromptInputSubmit status={busy ? "submitted" : "ready"} disabled={busy}>
               <ArrowUp size={16} />
             </PromptInputSubmit>
@@ -883,7 +893,9 @@ function GhostChat({
       if (draft && initialMessages.length === 0) {
         started.current = true;
         sessionStorage.removeItem(`ghost-draft-${threadId}`);
-        void sendMessage({ text: draft });
+        const img = sessionStorage.getItem(`ghost-draft-img-${threadId}`);
+        sessionStorage.removeItem(`ghost-draft-img-${threadId}`);
+        void sendMessage({ text: draft, ...(img ? { files: [{ type: "file" as const, mediaType: "image/jpeg", url: img }] } : {}) });
       }
     });
     return () => cancelAnimationFrame(frame);
