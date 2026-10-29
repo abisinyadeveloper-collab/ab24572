@@ -683,7 +683,7 @@ function StarterComposer({
   onPlus,
   onVoice,
 }: {
-  agent: AgentId;
+  agent: AgentChoice;
   onSend: (s: string) => Promise<void>;
   busy: boolean;
   onPlus: () => void;
@@ -731,8 +731,8 @@ function GhostChat({
 }: {
   threadId: string;
   initialMessages: UIMessage[];
-  agent: AgentId;
-  onAgentChange: (id: AgentId) => void;
+  agent: AgentChoice;
+  onAgentChange: (id: AgentChoice) => void;
   onFinish: () => Promise<void>;
 }) {
   const [text, setText] = useState("");
