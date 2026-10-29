@@ -32,3 +32,18 @@ describe("memory facts", () => {
   it("saves self-descriptions", () => expect(extractMemoryFacts("My name is Abel. What is 2+2?")).toEqual(["My name is Abel"]));
   it("ignores ordinary questions", () => expect(extractMemoryFacts("What is the capital of Kenya?")).toEqual([]));
 });
+
+import { pickAgent, detectMediaIntent } from "./ghost";
+describe("auto agent", () => {
+  it("routes code questions to Coder", () => expect(pickAgent("Fix this TypeScript bug in my function")).toBe("coder"));
+  it("routes security questions to Defender", () => expect(pickAgent("Harden my API against attack")).toBe("defender"));
+  it("routes research questions to Researcher", () => expect(pickAgent("Can you explain how photosynthesis works?")).toBe("researcher"));
+  it("routes decisions to Arbiter", () => expect(pickAgent("Which option should I choose for my database?")).toBe("arbiter"));
+  it("defaults planning questions to Architect", () => expect(pickAgent("Design the architecture for a payments service")).toBe("architect"));
+});
+describe("media intent from the question", () => {
+  it("detects image requests", () => expect(detectMediaIntent("Generate an image of a lion at sunrise")).toEqual({ kind: "image", prompt: "Generate an image of a lion at sunrise" }));
+  it("detects video requests", () => expect(detectMediaIntent("Make a short video of ocean waves")).toEqual({ kind: "video", prompt: "Make a short video of ocean waves" }));
+  it("ignores ordinary questions", () => expect(detectMediaIntent("What is the capital of Kenya?")).toBeNull());
+  it("ignores design work without media", () => expect(detectMediaIntent("Design a database schema for orders")).toBeNull());
+});
