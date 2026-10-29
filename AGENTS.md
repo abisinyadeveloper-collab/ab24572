@@ -24,3 +24,4 @@
 - External AI clients connect via the app MCP server in src/lib/mcp (OAuth via managed auth, caller-scoped client) so tools always act as the signed-in user under RLS.
 - Native phone shell uses Capacitor loading the hosted site (server.url in capacitor.config.ts) because the app is SSR and can't ship as static files.
 - The launch splash mounts once in the root alongside the workspace, with its own head-loaded stylesheet and a bounded dismissal timer, so navigation and loading failures cannot trap users behind it.
+- Telegram identities come only from secret-verified webhook sender IDs in matching private chats; register users server-side and scope all history by that ID to prevent cross-user access.
