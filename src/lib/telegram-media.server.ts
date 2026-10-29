@@ -54,7 +54,7 @@ export async function telegramStartVideo(chatId: number, updateId: number, promp
     if (active?.length) throw new Error("Another Ghost video is generating. Wait for it to finish.");
     const input = image ? [{ type: "text", text: prompt }, { type: "image", data: Buffer.from(await image.arrayBuffer()).toString("base64"), mime_type: image.type }] : prompt;
     const job = await createVideo({ apiKey: key, baseURL: "https://ai.gateway.lovable.dev", model: MEDIA_MODELS.video }, { input, response_format: { type: "video", resolution: "720p", duration: "5s", aspect_ratio: "16:9" } });
-    const { error: saved } = await db.from("telegram_media").update({ gateway_id: job.id, status: job.status, error: job.error?.message }).eq("id", row.id);
+    const { error: saved } = await db.from("telegram_media").update({ gateway_id: job.id, status: job.status, error: job.error?.message ?? null }).eq("id", row.id);
     if (saved) throw new Error("Unable to save video progress.");
     return row.id;
   } catch (error) {
@@ -74,7 +74,7 @@ export async function telegramVideoStatus(chatId: number) {
     const key = await assertMediaAvailable(MEDIA_MODELS.video);
     try {
       const job = await pollVideo({ apiKey: key, baseURL: "https://ai.gateway.lovable.dev", model: MEDIA_MODELS.video }, row.gateway_id);
-      if (job.status === "failed") { await db.from("telegram_media").update({ status: "failed", error: job.error?.message }).eq("id", row.id); return job.error?.message ?? "Video creation failed."; }
+      if (job.status === "failed") { await db.from("telegram_media").update({ status: "failed", error: job.error?.message ?? null }).eq("id", row.id); return job.error?.message ?? "Video creation failed."; }
       if (job.status !== "completed") return "Your video is still generating. Send /status again shortly.";
       const content = await fetch(`https://ai.gateway.lovable.dev/v1/videos/${encodeURIComponent(row.gateway_id)}/content`, { headers: { Authorization: `Bearer ${key}` } });
       if (!content.ok) return gatewayError(content, MEDIA_MODELS.video);
