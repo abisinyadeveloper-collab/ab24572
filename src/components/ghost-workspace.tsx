@@ -102,6 +102,8 @@ function TierPicker() {
   );
 }
 import ghostMark from "@/assets/ghost-emblem.jpg";
+import { useWebMCP } from "use-webmcp-tool";
+import { runWebMCPTool } from "@/lib/webmcp-telemetry";
 
 type Thread = { id: string; title: string; updated_at: string };
 const agentIcons = [Workflow, Code2, ScanLine, ShieldCheck, BookOpen, Scale];
@@ -115,6 +117,15 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
   const [activeAgent, setActiveAgent] = useState<AgentChoice>("auto");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [voiceOpen, setVoiceOpen] = useState(false);
+  useWebMCP({
+    name: "open_live_voice",
+    description: "Open Ghost's live voice call screen so the user can start talking.",
+    execute: () => runWebMCPTool("open_live_voice", () => {
+      if (!user) throw new Error("Sign in first to use live voice.");
+      setVoiceOpen(true);
+      return "Live voice screen opened; the user starts the call.";
+    }),
+  });
   const view = initialView;
   function setView(next: "chat" | "image" | "video") {
     void navigate({ to: next === "image" ? "/images" : next === "video" ? "/videos" : "/" });

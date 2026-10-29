@@ -3,12 +3,12 @@ import type { ToolContext } from "@lovable.dev/mcp-js";
 import type { Database } from "@/integrations/supabase/types";
 
 function supabaseProjectUrl() {
-  const url = process.env.SUPABASE_URL ?? import.meta.env.VITE_SUPABASE_URL;
+  const url = process.env['SUPABASE_URL'] ?? import.meta.env['VITE_SUPABASE_URL'];
   if (!url) throw new Error("Backend URL is not configured");
   return url;
 }
 function supabasePublishableKey() {
-  const key = process.env.SUPABASE_PUBLISHABLE_KEY ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const key = process.env['SUPABASE_PUBLISHABLE_KEY'] ?? import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY'];
   if (!key) throw new Error("Backend key is not configured");
   return key;
 }

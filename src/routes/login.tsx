@@ -5,7 +5,7 @@ import { GhostAuth } from "@/components/ghost-auth";
 import { oauthReturnPath } from "@/lib/oauth-return-path";
 
 export const Route = createFileRoute("/login")({
-  validateSearch: (s: Record<string, unknown>) => ({ next: oauthReturnPath(s.next) }),
+  validateSearch: (s: Record<string, unknown>) => ({ next: oauthReturnPath(s['next']) }),
   head: () => ({
     meta: [
       { title: "Sign in — Ghost" },
