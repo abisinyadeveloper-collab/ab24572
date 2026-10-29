@@ -322,13 +322,6 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
                   </Button>
                 </div>
               ))
-            ) : threadId ? (
-              <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
-                {!loadError && (user || !authReady) && <Loader2 className="animate-spin text-muted-foreground" />}
-                <p role="status" className="form-note">{loadError || (!authReady ? "Opening your conversation…" : !user ? "Sign in to open your saved conversation." : "Loading your conversation…")}</p>
-                {authReady && !user && <Button onClick={() => setAuthOpen(true)}>Sign in</Button>}
-                {loadError && <Button variant="outline" onClick={() => void navigate({ to: "/" })}>New chat</Button>}
-              </div>
             ) : (
               <p className="empty-history">
                 {user
@@ -373,7 +366,7 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
               <Button
                 size="icon-sm"
                 variant="ghost"
-                className="mobile-menu"
+                className="md:hidden"
                 aria-label="Open navigation"
                 onClick={() => setMobileOpen(!mobileOpen)}
               >
@@ -401,6 +394,13 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
                 onAgentChange={setActiveAgent}
                 onFinish={refreshThreads}
               />
+            ) : threadId ? (
+              <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
+                {!loadError && (user || !authReady) && <Loader2 className="animate-spin text-muted-foreground" />}
+                <p role="status" className="form-note">{loadError || (!authReady ? "Opening your conversation…" : !user ? "Sign in to open your saved conversation." : "Loading your conversation…")}</p>
+                {authReady && !user && <Button onClick={() => setAuthOpen(true)}>Sign in</Button>}
+                {loadError && <Button variant="outline" onClick={() => void navigate({ to: "/" })}>New chat</Button>}
+              </div>
             ) : (
               <>
                 <div className="welcome">
