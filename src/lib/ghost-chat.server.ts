@@ -157,7 +157,10 @@ export async function handleGhostChat(request: Request) {
         // Await the final text so upstream errors reach the durable pause handler.
         const finalText = await result.text;
         if (!finalText.trim()) {
-          writer.write({ type: "error", errorText: "The synthesis model returned no answer. This request has ended." });
+          writer.write({
+            type: "error",
+            errorText: "The synthesis model returned no answer. This request has ended.",
+          });
         }
       } catch (e) {
         const reason = await safeError(e);
