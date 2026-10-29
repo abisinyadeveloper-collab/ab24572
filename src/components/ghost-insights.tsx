@@ -34,7 +34,7 @@ export function GhostMemories() {
   return (
     <div className="memory-box">
       <strong>What Ghost remembers</strong>
-      <p className="form-note">Say “Remember that…” in any chat or call, or add a fact here.</p>
+      <p className="form-note">Say “Remember that…” in any chat, or add a fact here.</p>
       <div className="memory-add">
         <input aria-label="New memory" value={draft} maxLength={500} placeholder="e.g. I run ABISINIYA STORE" onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void add(); } }} />
         <Button type="button" size="sm" onClick={() => void add()} disabled={!draft.trim()}>Remember</Button>
