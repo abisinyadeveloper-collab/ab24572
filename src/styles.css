@@ -791,3 +791,14 @@
     transition: none !important;
   }
 }
+
+.voice-call { display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 0.5rem 0; }
+.voice-orb { width: 88px; height: 88px; border-radius: 9999px; display: grid; place-items: center; background: var(--muted); color: var(--muted-foreground); border: 1px solid var(--border); transition: all .3s; }
+.voice-orb.live { background: var(--primary); color: var(--primary-foreground); box-shadow: 0 0 0 10px color-mix(in oklab, var(--primary) 18%, transparent); animation: voice-pulse 1.8s ease-in-out infinite; }
+@keyframes voice-pulse { 50% { box-shadow: 0 0 0 18px color-mix(in oklab, var(--primary) 8%, transparent); } }
+.voice-status { font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; color: var(--muted-foreground); }
+.voice-error { color: var(--destructive); font-size: 0.85rem; text-align: center; }
+.voice-controls { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
+.voice-transcript { width: 100%; max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; border-top: 1px solid var(--border); padding-top: 0.75rem; font-size: 0.95rem; line-height: 1.6; }
+.voice-transcript span { display: block; font-family: "IBM Plex Mono", monospace; font-size: 0.65rem; text-transform: uppercase; color: var(--muted-foreground); }
+.voice-transcript .ghost span { color: var(--primary); }

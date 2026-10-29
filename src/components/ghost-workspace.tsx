@@ -52,6 +52,8 @@ import {
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { supabase } from "@/integrations/supabase/client";
 import { GhostAuth } from "./ghost-auth";
+import { GhostVoiceDialog } from "./ghost-voice";
+import { Mic as MicIcon } from "lucide-react";
 import { agents, type AgentId } from "@/lib/ghost";
 import ghostMark from "@/assets/ghost-emblem.jpg";
 
@@ -66,6 +68,7 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
   const [threads, setThreads] = useState<Thread[]>([]);
   const [activeAgent, setActiveAgent] = useState<AgentId>("architect");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [voiceOpen, setVoiceOpen] = useState(false);
   const [panel, setPanel] = useState<"capabilities" | "models" | "profile" | null>(null);
   const [initialMessages, setInitialMessages] = useState<UIMessage[] | null>(threadId ? null : []);
   const [loadError, setLoadError] = useState("");
@@ -268,6 +271,10 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
                   <MessageSquare />
                   Ghost console
                 </Link>
+              </Button>
+              <Button variant="ghost" className="nav-item" onClick={() => (user ? setVoiceOpen(true) : setAuthOpen(true))}>
+                <MicIcon />
+                Live voice<span className="ml-auto font-mono text-[10px]">አማ</span>
               </Button>
               <Button variant="ghost" className="nav-item" onClick={() => setPanel("capabilities")}>
                 <LayoutGrid />
@@ -492,6 +499,7 @@ export function GhostWorkspace({ threadId }: { threadId?: string }) {
         </main>
       </div>
       <GhostAuth open={authOpen} onOpenChange={setAuthOpen} />
+      <GhostVoiceDialog open={voiceOpen} onOpenChange={setVoiceOpen} />
       <Dialog
         open={panel !== null}
         onOpenChange={(v) => {
