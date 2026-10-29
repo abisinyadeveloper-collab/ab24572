@@ -752,7 +752,7 @@ function GhostChat({
           },
         }),
       }),
-    [threadId, agent],
+    [threadId, agent, tier],
   );
   const { messages, sendMessage, status, error, stop } = useChat({
     id: threadId,
