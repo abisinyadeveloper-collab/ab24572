@@ -93,12 +93,31 @@ export function pickAgent(text: string): AgentId {
 export type MediaIntent = { kind: "image" | "video"; prompt: string };
 export function detectMediaIntent(text: string): MediaIntent | null {
   const t = text.trim();
-  if (!/\b(generate|create|make|draw|design|render|produce|paint|imagine|show me)\b/i.test(t)) return null;
-  if (/\b(video|clip|animation|animated|footage|movie|short film)\b/i.test(t)) return { kind: "video", prompt: t };
-  if (/\b(image|picture|photo|artwork|art|drawing|illustration|logo|poster|wallpaper|portrait|diagram)\b/i.test(t)) return { kind: "image", prompt: t };
+  const verb = /\b(generate|create|make|draw|design|render|produce|paint|imagine|show me|build|give me|i want|i need|can you)\b/i.test(t) || /(ፍጠር|ፍጠሪ|ስራ|ስሪ|ሳል|ሳይ|አዘጋጅ)/.test(t);
+  const startsNoun = /^(an? )?(image|picture|photo|video|clip|logo|poster)s? (of|for|with|showing)\b/i.test(t);
+  if (!verb && !startsNoun) return null;
+  if (/\b(video|clip|animation|animated|footage|movie|short film|reel)\b/i.test(t) || /ቪዲዮ/.test(t)) return { kind: "video", prompt: t };
+  if (/\b(image|images|picture|pic|photo|artwork|art|drawing|illustration|logo|poster|wallpaper|portrait|diagram|banner|sticker|thumbnail)\b/i.test(t) || /(ምስል|ፎቶ|ስዕል)/.test(t)) return { kind: "image", prompt: t };
   return null;
 }
 export function ownsThread(owner: string, user: string) {
   return owner === user;
 }
-export const ghostInstructions = `You are ABISINYA GHOST, a safe, candid assistant for coding, planning, creative writing, learning, translation, and defensive security. You are an orchestrated AI workflow, not a newly trained model. Never claim access to external tools, browsing, local execution, surveillance, medical devices, bank systems, quantum hardware, or any of the speculative abilities in the user's manifest. You have text reasoning only. Distinguish suggestions from executed work. Refuse theft, fraud, malware, destructive intrusion, invasive surveillance, weaponization and harmful biological or physical operations. Offer safe defensive or educational alternatives. Medical information is educational, not diagnosis or treatment. Do not fabricate sources or live facts. Be useful, specific, and use readable markdown.`;
+export const ghostInstructions = `You are ABISINYA GHOST, a safe, candid assistant for coding, planning, creative writing, learning, translation, and defensive security. You are an orchestrated AI workflow, not a newly trained model. Never claim access to external tools, browsing, local execution, surveillance, medical devices, bank systems, quantum hardware, or any of the speculative abilities in the user's manifest. You have text reasoning only. Distinguish suggestions from executed work. Refuse theft, fraud, malware, destructive intrusion, invasive surveillance, weaponization and harmful biological or physical operations. Offer safe defensive or educational alternatives. Medical information is educational, not diagnosis or treatment. Do not fabricate sources or live facts. Be useful, specific, and use readable markdown. You have a fun side: when asked for a joke, tell genuinely funny ones; when asked to roast someone (including the user), deliver a playful, witty roast — clever, never hateful, never about race, religion, disability or other protected traits. When the user asks to open an app or call someone, the app handles it on their device; briefly confirm.`;
+
+export type PhoneAction = { kind: "open"; app: string; url: string } | { kind: "call"; number: string } | { kind: "sms"; number: string };
+const appLinks: Record<string, string> = {
+  tiktok: "https://www.tiktok.com/foryou", youtube: "https://m.youtube.com/shorts", instagram: "https://www.instagram.com/reels/",
+  facebook: "https://m.facebook.com", telegram: "https://t.me", whatsapp: "https://wa.me", x: "https://x.com", twitter: "https://x.com",
+  maps: "https://maps.google.com", "google maps": "https://maps.google.com", gmail: "https://mail.google.com", spotify: "https://open.spotify.com",
+  netflix: "https://www.netflix.com", snapchat: "https://www.snapchat.com", linkedin: "https://www.linkedin.com", google: "https://www.google.com",
+};
+export function detectPhoneAction(text: string): PhoneAction | null {
+  const t = text.trim().toLowerCase().replace(/^(hey |ok |my )?ghost[,!.]?\s*/, "");
+  const num = t.match(/(\+?\d[\d\s-]{5,}\d)/);
+  if (/^(please )?(call|dial|ring|ደውል)/.test(t) && num) return { kind: "call", number: (num[1] ?? "").replace(/[\s-]/g, "") };
+  if (/^(please )?(text|sms|message)/.test(t) && num) return { kind: "sms", number: (num[1] ?? "").replace(/[\s-]/g, "") };
+  const open = t.match(/^(please )?(open|launch|go to|start|scroll|ክፈት)\s+(?:the\s+)?(.+?)(?:\s+app)?(?:\s+(?:videos?|reels|shorts|and.*))?[.!]?$/);
+  if (open) { const app = (open[3] ?? "").trim(); const url = appLinks[app]; if (url) return { kind: "open", app, url }; }
+  return null;
+}

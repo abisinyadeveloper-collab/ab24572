@@ -105,7 +105,8 @@ import ghostMark from "@/assets/ghost-emblem.jpg";
 import { useWebMCP } from "use-webmcp-tool";
 import { GhostPermissions } from "./ghost-permissions";
 import { Camera as CameraIcon, MonitorUp, Share2, X as XIcon } from "lucide-react";
-import { haptic, notify, currentLocation, compressImage, captureScreen } from "@/lib/device-permissions";
+import { haptic, notify, currentLocation, compressImage, captureScreen, runPhoneAction } from "@/lib/device-permissions";
+import { detectPhoneAction } from "@/lib/ghost";
 import { runWebMCPTool } from "@/lib/webmcp-telemetry";
 
 type Thread = { id: string; title: string; updated_at: string };
@@ -710,6 +711,8 @@ function StarterComposer({
       <PromptInput
         className="composer"
         onSubmit={async ({ text: submitted }) => {
+          const action = detectPhoneAction(submitted);
+          if (action) runPhoneAction(action);
           if (submitted.trim()) await onSend(submitted.trim());
         }}
       >
@@ -721,7 +724,16 @@ function StarterComposer({
           autoFocus
         />
         <PromptInputFooter>
-          <button type="button" className="pill-icon" aria-label="Create an image" onClick={onPlus}><Plus /></button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button type="button" className="pill-icon" aria-label="More options"><Plus /></button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem onSelect={() => setText("Create an image of ")}>Create an image in chat</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setText("Make a video of ")}>Create a video in chat</DropdownMenuItem>
+              <DropdownMenuItem onSelect={onPlus}>Open image studio</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <span className="flex-1" />
           <button type="button" className="pill-icon" aria-label="Talk to Ghost" onClick={onVoice}><MicIcon /></button>
           {text.trim() ? (
@@ -932,6 +944,8 @@ function GhostChat({
           className="composer"
           onSubmit={async ({ text: submitted }) => {
             if ((!submitted.trim() && !attachment) || busy) return;
+            const action = detectPhoneAction(submitted);
+            if (action) runPhoneAction(action);
             const image = attachment;
             setText("");
             setAttachment("");

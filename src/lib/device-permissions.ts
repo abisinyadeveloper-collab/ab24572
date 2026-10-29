@@ -102,3 +102,8 @@ export async function captureScreen(): Promise<string> {
     stream.getTracks().forEach((t) => t.stop());
   }
 }
+
+export function runPhoneAction(a: import("./ghost").PhoneAction) {
+  if (a.kind === "open") window.open(a.url, "_blank", "noopener");
+  else window.location.href = `${a.kind === "call" ? "tel" : "sms"}:${a.number}`;
+}
