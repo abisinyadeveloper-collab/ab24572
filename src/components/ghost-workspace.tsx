@@ -103,6 +103,9 @@ function TierPicker() {
 }
 import ghostMark from "@/assets/ghost-emblem.jpg";
 import { useWebMCP } from "use-webmcp-tool";
+import { GhostPermissions } from "./ghost-permissions";
+import { Camera as CameraIcon, MonitorUp, Share2, X as XIcon } from "lucide-react";
+import { haptic, notify, currentLocation, compressImage, captureScreen } from "@/lib/device-permissions";
 import { runWebMCPTool } from "@/lib/webmcp-telemetry";
 
 type Thread = { id: string; title: string; updated_at: string };
@@ -621,6 +624,7 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
                   </label>
                   <p className="form-note">{user.email}</p>
                   <GhostMemories />
+                  <GhostPermissions />
                   <div className="mt-5 flex justify-between gap-3">
                     <Button type="submit">
                       <Check />
@@ -759,7 +763,7 @@ function ChatMedia({ media }: { media: ChatMediaData }) {
         setFailure(row.error ?? "");
         if (row.status === "completed" && row.path) {
           const { data } = await supabase.storage.from("ghost-media").createSignedUrl(row.path, 3600);
-          if (live && data) setSrc(data.signedUrl);
+          if (live && data) { setSrc(data.signedUrl); notify("Your Ghost video is ready", media.prompt); }
           return;
         }
         if (row.status === "failed") return;
@@ -802,6 +806,10 @@ function GhostChat({
   const [tier] = useTier();
   const textarea = useRef<HTMLTextAreaElement>(null);
   const started = useRef(false);
+  const [attachment, setAttachment] = useState("");
+  const [attachError, setAttachError] = useState("");
+  const location = useRef<{ lat: number; lon: number } | null>(null);
+  const cameraInput = useRef<HTMLInputElement>(null);
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
@@ -818,12 +826,17 @@ function GhostChat({
             threadId,
             agent,
             tier,
+            ...(location.current ? { location: location.current } : {}),
             messages: messages.map((m) => ({
               id: m.id,
               role: m.role,
-              parts: m.parts
-                .filter((p) => p.type === "text")
-                .map((p) => ({ type: "text", text: "text" in p ? p.text : "" })),
+              parts: m.parts.flatMap((p) =>
+                p.type === "text"
+                  ? [{ type: "text", text: p.text }]
+                  : p.type === "file" && p.mediaType.startsWith("image/") && p.url.startsWith("data:")
+                    ? [{ type: "file", mediaType: p.mediaType, url: p.url }]
+                    : [],
+              ),
             })),
           },
         }),
@@ -841,6 +854,7 @@ function GhostChat({
       }
     },
     onFinish: () => {
+      haptic([8, 40, 8]);
       setPhase("");
       void onFinish();
     },
@@ -889,12 +903,14 @@ function GhostChat({
                       <summary>Reasoning summary</summary>
                       <MessageResponse>{p.text}</MessageResponse>
                     </details>
+                  ) : p.type === "file" && p.mediaType.startsWith("image/") ? (
+                    <img key={i} src={p.url} alt="Shared with Ghost" className="chat-image" />
                   ) : p.type === "data-media" ? (
                     <ChatMedia key={i} media={p.data as ChatMediaData} />
                   ) : null,
                 )}
               </MessageContent>
-              {m.role === "assistant" && !busy && <div className="message-actions"><Button size="icon-sm" variant="ghost" title="Copy answer" aria-label="Copy answer" onClick={() => void navigator.clipboard.writeText(m.parts.filter(p => p.type === "text").map(p => p.text).join("\n"))}><Copy/></Button>{m.id === messages.at(-1)?.id && <Button size="icon-sm" variant="ghost" title="Regenerate answer" aria-label="Regenerate answer" onClick={() => void regenerate()}><RotateCcw/></Button>}</div>}
+              {m.role === "assistant" && !busy && <div className="message-actions"><Button size="icon-sm" variant="ghost" title="Copy answer" aria-label="Copy answer" onClick={() => void navigator.clipboard.writeText(m.parts.filter(p => p.type === "text").map(p => p.text).join("\n"))}><Copy/></Button>{typeof navigator !== "undefined" && "share" in navigator && <Button size="icon-sm" variant="ghost" title="Share answer" aria-label="Share answer" onClick={() => void navigator.share({ title: "Ghost", text: m.parts.filter(p => p.type === "text").map(p => p.text).join("\n") }).catch(() => {})}><Share2/></Button>}{m.id === messages.at(-1)?.id && <Button size="icon-sm" variant="ghost" title="Regenerate answer" aria-label="Regenerate answer" onClick={() => void regenerate()}><RotateCcw/></Button>}</div>}
             </Message>
           ))}
           {busy && (
@@ -906,6 +922,7 @@ function GhostChat({
         <ConversationScrollButton />
       </Conversation>
       <div className="composer-region">
+        {attachError && <p role="alert" className="chat-error">{attachError}</p>}
         {error && (
           <p role="alert" className="chat-error">
             {error.message}
@@ -914,12 +931,25 @@ function GhostChat({
         <PromptInput
           className="composer"
           onSubmit={async ({ text: submitted }) => {
-            if (!submitted.trim() || busy) return;
+            if ((!submitted.trim() && !attachment) || busy) return;
+            const image = attachment;
             setText("");
+            setAttachment("");
             textarea.current?.focus();
-            await sendMessage({ text: submitted.trim() });
+            haptic();
+            location.current = await currentLocation();
+            await sendMessage({
+              text: submitted.trim() || "What do you see in this image?",
+              ...(image ? { files: [{ type: "file" as const, mediaType: "image/jpeg", url: image }] } : {}),
+            });
           }}
         >
+          {attachment && (
+            <div className="chat-attachment">
+              <img src={attachment} alt="Image to send" />
+              <Button type="button" size="icon-sm" variant="ghost" aria-label="Remove image" onClick={() => setAttachment("")}><XIcon /></Button>
+            </div>
+          )}
           <PromptInputTextarea
             ref={textarea}
             value={text}
@@ -947,13 +977,22 @@ function GhostChat({
               </select>
 
             </label>
+            <input ref={cameraInput} type="file" accept="image/*" capture="environment" className="sr-only" onChange={async (e) => {
+              const f = e.target.files?.[0]; e.target.value = "";
+              if (!f) return;
+              try { setAttachError(""); setAttachment(await compressImage(f)); } catch (err) { setAttachError(err instanceof Error ? err.message : "Could not use that photo."); }
+            }} />
+            <button type="button" className="pill-icon" aria-label="Take or attach a photo" title="Camera" disabled={busy} onClick={() => cameraInput.current?.click()}><CameraIcon /></button>
+            <button type="button" className="pill-icon" aria-label="Share your screen" title="Share screen" disabled={busy} onClick={async () => {
+              try { setAttachError(""); setAttachment(await captureScreen()); } catch (err) { if (!(err instanceof DOMException && err.name === "NotAllowedError")) setAttachError(err instanceof Error ? err.message : "Screen share failed."); }
+            }}><MonitorUp /></button>
             <PromptInputSubmit
               status={status}
               onStop={() => {
                 void stop();
                 setPhase("");
               }}
-              disabled={!busy && !text.trim()}
+              disabled={!busy && !text.trim() && !attachment}
             />
           </PromptInputFooter>
         </PromptInput>
