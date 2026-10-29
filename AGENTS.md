@@ -14,3 +14,4 @@
 - Durable gateway access blocks are stored server-side and checked before any model call; never automatically retry blocked calls.
 
 - Live web/social context comes from Firecrawl search in a server-only helper, injected before drafting, so private connector keys never reach the browser.
+- Live voice runs through a persistent WebSocket relay (/api/live, src/lib/live-relay.server.ts) dispatched in src/server.ts and live-vite-plugin.ts in dev; the relay verifies the caller's sign-in token from app.start before opening a paid Gateway session.
