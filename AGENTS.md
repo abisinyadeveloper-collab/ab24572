@@ -21,3 +21,4 @@
 - Auto tier and memory extraction are deterministic rules in src/lib/ghost.ts (no extra model call), so routing is free, fast and testable.
 - Memories and activity rows are owner-scoped tables written with the caller's own token (chat and voice relay), never the admin client.
 - External AI clients connect via the app MCP server in src/lib/mcp (OAuth via managed auth, caller-scoped client) so tools always act as the signed-in user under RLS.
+- Native phone shell uses Capacitor loading the hosted site (server.url in capacitor.config.ts) because the app is SSR and can't ship as static files.
