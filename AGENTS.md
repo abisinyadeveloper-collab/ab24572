@@ -25,3 +25,5 @@
 - Native phone shell uses Capacitor loading the hosted site (server.url in capacitor.config.ts) because the app is SSR and can't ship as static files.
 - The launch splash mounts once in the root alongside the workspace, with its own head-loaded stylesheet and a bounded dismissal timer, so navigation and loading failures cannot trap users behind it.
 - Telegram identities come only from secret-verified webhook sender IDs in matching private chats; register users server-side and scope all history by that ID to prevent cross-user access.
+- Telegram media uses separate sender-owned records and private storage, reuses the website's model settings and durable AI blocks, and collects videos only on explicit /status requests to avoid unattended paid jobs.
+- Uploaded Office documents are parsed as bounded text using pure-JavaScript ZIP/XML readers; PDFs and supported images use native model inputs, and unsupported binaries are rejected rather than executed.

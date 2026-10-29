@@ -33,8 +33,8 @@ const bodySchema = z.object({
               z.object({ type: z.literal("text"), text: z.string().max(60000) }),
               z.object({
                 type: z.literal("file"),
-                mediaType: z.enum(["image/jpeg", "image/png", "image/webp"]),
-                url: z.string().startsWith("data:image/").max(3_000_000),
+                mediaType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf"]),
+                url: z.string().regex(/^data:(?:image\/(?:jpeg|png|webp)|application\/pdf);base64,/).max(3_000_000),
               }),
             ]),
           )

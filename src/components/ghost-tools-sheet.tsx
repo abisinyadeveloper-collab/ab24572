@@ -2,6 +2,8 @@ import { useRef } from "react";
 import { BookOpen, Camera, Clapperboard, ImagePlus, Images, Orbit, Paperclip, SquarePen } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { compressImage } from "@/lib/device-permissions";
+import { readGhostFile } from "@/lib/ghost-files";
+import { toast } from "sonner";
 
 type Props = {
   open: boolean;
@@ -19,8 +21,19 @@ export function ToolsSheet({ open, onOpenChange, onPrompt, onImage, onFileText, 
 
   async function take(file: File | undefined) {
     if (!file) return;
-    if (file.type.startsWith("image/")) onImage(await compressImage(file));
-    else onFileText(file.name, await file.text());
+    try {
+      const read = await readGhostFile(file);
+      if (read.kind === "image") onImage(await compressImage(file));
+      else if (read.kind === "pdf") {
+        if (file.size > 2 * 1024 * 1024) throw new Error("For website chat, choose a PDF under 2 MB; Telegram accepts up to 20 MB.");
+        const reader = new FileReader();
+        reader.onload = () => { if (typeof reader.result === "string") onImage(reader.result); };
+        reader.readAsDataURL(read.file);
+      } else {
+        if (read.text.length > 20000) throw new Error("Split this document into smaller files under 20,000 characters for website chat.");
+        onFileText(file.name, read.text);
+      }
+    } catch (error) { toast.error(error instanceof Error ? error.message : "Unable to read this file."); }
   }
 
   const tools = [
@@ -55,7 +68,7 @@ export function ToolsSheet({ open, onOpenChange, onPrompt, onImage, onFileText, 
         </ul>
         <input ref={photos} hidden type="file" accept="image/*" onChange={(e) => void take(e.target.files?.[0])} />
         <input ref={camera} hidden type="file" accept="image/*" capture="environment" onChange={(e) => void take(e.target.files?.[0])} />
-        <input ref={files} hidden type="file" accept="image/*,.txt,.md,.csv,.json,.js,.ts,.tsx,.py,.html,.css" onChange={(e) => void take(e.target.files?.[0])} />
+        <input ref={files} hidden type="file" accept="image/png,image/jpeg,image/webp,.pdf,.docx,.pptx,.xlsx,.odt,.ods,.odp,.txt,.md,.csv,.json,.xml,.yaml,.js,.ts,.tsx,.py,.html,.css" onChange={(e) => void take(e.target.files?.[0])} />
       </SheetContent>
     </Sheet>
   );
