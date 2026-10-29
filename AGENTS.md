@@ -8,3 +8,8 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Ghost uses AI Elements and AI SDK UI-message streaming, with account-owned conversations stored in Cloud and thread IDs in page URLs, so history stays isolated and reloadable.
+- AI providers and safety instructions live in server-only helpers; Astra drafts and Fable synthesizes sequentially, so Ghost is a workflow rather than a claimed trained model.
+- Durable gateway access blocks are stored server-side and checked before any model call; never automatically retry blocked calls.
+

@@ -14,7 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ghost_ai_blocks: {
+        Row: {
+          created_at: string
+          model: string
+          reason: string
+          status: number
+        }
+        Insert: {
+          created_at?: string
+          model: string
+          reason: string
+          status: number
+        }
+        Update: {
+          created_at?: string
+          model?: string
+          reason?: string
+          status?: number
+        }
+        Relationships: []
+      }
+      ghost_threads: {
+        Row: {
+          id: string
+          messages: Json
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          messages?: Json
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          messages?: Json
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string
+          display_name: string
+          id: string
+        }
+        Insert: {
+          avatar_url?: string
+          display_name?: string
+          id: string
+        }
+        Update: {
+          avatar_url?: string
+          display_name?: string
+          id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

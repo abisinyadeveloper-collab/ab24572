@@ -1,0 +1,16 @@
+CREATE TABLE public.profiles (id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE, display_name text NOT NULL DEFAULT '', avatar_url text NOT NULL DEFAULT '');
+GRANT SELECT, INSERT, UPDATE ON public.profiles TO authenticated;
+GRANT ALL ON public.profiles TO service_role;
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY profiles_own ON public.profiles FOR ALL TO authenticated USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+CREATE FUNCTION public.create_ghost_profile() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$ BEGIN INSERT INTO public.profiles(id) VALUES (NEW.id) ON CONFLICT DO NOTHING; RETURN NEW; END; $$;
+CREATE TRIGGER ghost_profile_signup AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.create_ghost_profile();
+CREATE TABLE public.ghost_threads (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id uuid NOT NULL, title text NOT NULL DEFAULT 'New conversation', messages jsonb NOT NULL DEFAULT '[]', updated_at timestamptz NOT NULL DEFAULT now());
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.ghost_threads TO authenticated;
+GRANT ALL ON public.ghost_threads TO service_role;
+ALTER TABLE public.ghost_threads ENABLE ROW LEVEL SECURITY;
+CREATE POLICY threads_own ON public.ghost_threads FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE INDEX ghost_threads_owner ON public.ghost_threads(user_id,updated_at DESC);
+CREATE TABLE public.ghost_ai_blocks (model text PRIMARY KEY, reason text NOT NULL, status integer NOT NULL, created_at timestamptz NOT NULL DEFAULT now());
+GRANT ALL ON public.ghost_ai_blocks TO service_role;
+ALTER TABLE public.ghost_ai_blocks ENABLE ROW LEVEL SECURITY;
