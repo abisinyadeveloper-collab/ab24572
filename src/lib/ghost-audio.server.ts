@@ -25,7 +25,7 @@ export async function handleGhostSpeech(request: Request) {
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: AUDIO_MODELS.speech,
-        contents: [{ parts: [{ text: `Read this naturally, with native pronunciation for whatever language it is written in (Amharic, Afaan Oromoo, Tigrinya, Somali or English):\n${text}` }] }],
+        contents: [{ role: "user", parts: [{ text: `Read this naturally, with native pronunciation for whatever language it is written in (Amharic, Afaan Oromoo, Tigrinya, Somali or English):\n${text}` }] }],
         generationConfig: { responseModalities: ["AUDIO"], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } },
       }),
     });
