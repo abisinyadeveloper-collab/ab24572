@@ -23,7 +23,6 @@ export default defineConfig({
       alias: [
         { find: /^entities\/lib\/decode\.js$/, replacement: path.resolve(__dirname, "node_modules/entities/lib/decode.js") },
         { find: /^entities\/lib\/encode\.js$/, replacement: path.resolve(__dirname, "node_modules/entities/lib/encode.js") },
-        { find: /^entities$/, replacement: path.resolve(__dirname, "node_modules/entities") },
       ],
     },
     plugins: [
