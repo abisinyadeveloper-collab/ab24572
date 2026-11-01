@@ -18,11 +18,12 @@ export default defineConfig({
   },
   vite: {
     resolve: {
-      alias: {
-        "entities/lib/decode.js": path.resolve(__dirname, "node_modules/entities/lib/decode.js"),
-        "entities/lib/encode.js": path.resolve(__dirname, "node_modules/entities/lib/encode.js"),
-        entities: path.resolve(__dirname, "node_modules/entities"),
-      },
+      // Exact-match aliases only: email rendering needs entities v4, while parse5 keeps its own
+      // nested v6 for subpaths like "entities/decode" — a prefix alias would break those.
+      alias: [
+        { find: /^entities\/lib\/decode\.js$/, replacement: path.resolve(__dirname, "node_modules/entities/lib/decode.js") },
+        { find: /^entities\/lib\/encode\.js$/, replacement: path.resolve(__dirname, "node_modules/entities/lib/encode.js") },
+      ],
     },
     plugins: [
       liveVoiceDev(),
