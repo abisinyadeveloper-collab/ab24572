@@ -17,7 +17,14 @@ export interface TemplateEntry {
  *   import { template as welcomeTemplate } from './welcome'
  *   // then add to TEMPLATES: 'welcome': welcomeTemplate
  */
+import { template as welcome } from './welcome'
+import { template as videoReady } from './video-ready'
+import { template as newSignIn } from './new-sign-in'
+import { template as passwordChanged } from './password-changed'
+
 export const TEMPLATES: Record<string, TemplateEntry> = {
-  // Add templates here as they are created, e.g.:
-  // 'welcome': welcomeTemplate,
+  'welcome': welcome,
+  'video-ready': videoReady,
+  'new-sign-in': newSignIn,
+  'password-changed': passwordChanged,
 }
