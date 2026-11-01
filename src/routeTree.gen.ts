@@ -19,6 +19,7 @@ import { Route as VideosRouteImport } from './routes/videos'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiImagesRouteImport } from './routes/api/images'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as ChatThreadIdRouteImport } from './routes/chat.$threadId'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
@@ -74,6 +75,11 @@ const ApiImagesRoute = ApiImagesRouteImport.update({
   path: '/api/images',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ChatThreadIdRoute = ChatThreadIdRouteImport.update({
   id: '/chat/$threadId',
   path: '/chat/$threadId',
@@ -102,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/api/chat': typeof ApiChatRoute
   '/api/images': typeof ApiImagesRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/chat/$threadId': typeof ChatThreadIdRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/api/chat': typeof ApiChatRoute
   '/api/images': typeof ApiImagesRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/chat/$threadId': typeof ChatThreadIdRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -133,6 +141,7 @@ export interface FileRoutesById {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/api/chat': typeof ApiChatRoute
   '/api/images': typeof ApiImagesRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/chat/$threadId': typeof ChatThreadIdRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -150,6 +159,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/api/chat'
     | '/api/images'
+    | '/auth/callback'
     | '/chat/$threadId'
     | '/.lovable/oauth/consent'
     | '/api/public/telegram/webhook'
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/api/chat'
     | '/api/images'
+    | '/auth/callback'
     | '/chat/$threadId'
     | '/.lovable/oauth/consent'
     | '/api/public/telegram/webhook'
@@ -180,6 +191,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/api/chat'
     | '/api/images'
+    | '/auth/callback'
     | '/chat/$threadId'
     | '/.lovable/oauth/consent'
     | '/api/public/telegram/webhook'
@@ -196,6 +208,7 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiImagesRoute: typeof ApiImagesRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
   ChatThreadIdRoute: typeof ChatThreadIdRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
@@ -273,6 +286,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiImagesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/chat/$threadId': {
       id: '/chat/$threadId'
       path: '/chat/$threadId'
@@ -309,6 +329,7 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   ApiChatRoute: ApiChatRoute,
   ApiImagesRoute: ApiImagesRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
   ChatThreadIdRoute: ChatThreadIdRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,

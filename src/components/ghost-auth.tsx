@@ -1,130 +1,233 @@
-import { useState } from "react";
-import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeft, Eye, EyeOff, Loader2, Lock, Mail, MailCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { AppleMark, GoogleMark, MicrosoftMark } from "@/components/auth-marks";
+import { friendlyAuthError, passwordIssue, passwordStrength, MIN_PASSWORD } from "@/lib/auth-rules";
 import emblem from "@/assets/ghost-emblem.jpg";
 
-type Mode = "login" | "signup" | "reset";
+type Mode = "login" | "signup" | "reset" | "sent";
+type Provider = "google" | "apple" | "microsoft";
+type Sent = { kind: "signup" | "reset"; email: string };
 
-function GoogleMark() {
-  return (
-    <svg viewBox="0 0 48 48" aria-hidden="true" className="size-[18px]">
-      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
-      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
-      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
-      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
-    </svg>
-  );
-}
+const PROVIDERS: { id: Provider; label: string; Mark: () => React.JSX.Element }[] = [
+  { id: "google", label: "Google", Mark: GoogleMark },
+  { id: "apple", label: "Apple", Mark: AppleMark },
+  { id: "microsoft", label: "Microsoft", Mark: MicrosoftMark },
+];
+const STRENGTH = ["Too short", "Weak", "Okay", "Strong", "Very strong"];
 
 export function GhostAuth({ open, onOpenChange, next }: { open: boolean; onOpenChange: (v: boolean) => void; next?: string }) {
-  const returnUrl = () => (next ? new URL(next, window.location.origin).href : window.location.origin);
+  const nextPath = next && next.startsWith("/") ? next : "/";
+  const confirmUrl = () => `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`;
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [show, setShow] = useState(false);
-  const [busy, setBusy] = useState<"" | "email" | "google">("");
-  const [notice, setNotice] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
-  const switchMode = (m: Mode) => { setMode(m); setNotice(null); };
+  const [busy, setBusy] = useState<"" | "email" | "resend" | Provider>("");
+  const [notice, setNotice] = useState<{ tone: "ok" | "error"; text: string; unconfirmed?: boolean } | null>(null);
+  const [sent, setSent] = useState<Sent | null>(null);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
+
+  const switchMode = (m: Mode) => { setMode(m); setNotice(null); setConfirm(""); };
+  const fail = (err: unknown) => {
+    const f = friendlyAuthError(err instanceof Error ? err.message : "Something went wrong. Try again.");
+    setNotice({ tone: "error", ...f });
+  };
+
+  async function sendLink(kind: Sent["kind"], to: string) {
+    if (kind === "reset") {
+      const { error } = await supabase.auth.resetPasswordForEmail(to, { redirectTo: `${window.location.origin}/reset-password` });
+      if (error) throw error;
+    } else {
+      const { error } = await supabase.auth.resend({ type: "signup", email: to, options: { emailRedirectTo: confirmUrl() } });
+      if (error) throw error;
+    }
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setBusy("email");
     setNotice(null);
+    const addr = email.trim().toLowerCase();
+    if (mode === "signup") {
+      const issue = passwordIssue(password, confirm);
+      if (issue) return setNotice({ tone: "error", text: issue });
+    }
+    setBusy("email");
     try {
       if (mode === "reset") {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + "/reset-password" });
-        if (error) throw error;
-        setNotice({ tone: "ok", text: "Check your inbox for a reset link." });
+        await sendLink("reset", addr);
+        setSent({ kind: "reset", email: addr }); setCooldown(60); setMode("sent");
       } else if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: returnUrl() } });
+        const { data, error } = await supabase.auth.signUp({ email: addr, password, options: { emailRedirectTo: confirmUrl() } });
         if (error) throw error;
-        setNotice({ tone: "ok", text: "Almost there — confirm your email, then sign in." });
+        if (data.user && data.user.identities?.length === 0) {
+          setNotice({ tone: "error", text: "An account with this email already exists. Sign in instead." });
+        } else if (data.session) {
+          onOpenChange(false);
+        } else {
+          setSent({ kind: "signup", email: addr }); setCooldown(60); setMode("sent"); setPassword(""); setConfirm("");
+        }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({ email: addr, password });
         if (error) throw error;
         onOpenChange(false);
       }
     } catch (err) {
-      setNotice({ tone: "error", text: err instanceof Error ? err.message : "Unable to sign in." });
+      fail(err);
     } finally {
       setBusy("");
     }
   }
 
-  async function google() {
-    setBusy("google");
+  async function resend(kind: Sent["kind"], to: string) {
+    if (!to || cooldown > 0) return;
+    setBusy("resend");
+    try {
+      await sendLink(kind, to);
+      setCooldown(60);
+      setNotice({ tone: "ok", text: "A new link is on its way." });
+    } catch (err) { fail(err); } finally { setBusy(""); }
+  }
+
+  async function social(provider: Provider) {
+    setBusy(provider);
     setNotice(null);
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: returnUrl() });
-    if (result.error) { setNotice({ tone: "error", text: result.error.message }); setBusy(""); }
+    const result = await lovable.auth.signInWithOAuth(provider, { redirect_uri: new URL(nextPath, window.location.origin).href });
+    if (result.error) { fail(result.error); setBusy(""); }
     else if (!result.redirected) { setBusy(""); onOpenChange(false); }
   }
 
-  const title = mode === "signup" ? "Create your Ghost account" : mode === "reset" ? "Reset your password" : "Welcome back";
-  const subtitle = mode === "reset" ? "We'll email you a secure link." : "Private conversations. A workspace of your own.";
+  const title = mode === "sent" ? "Check your inbox"
+    : mode === "signup" ? "Create your Ghost account"
+    : mode === "reset" ? "Forgot your password?" : "Welcome back";
+  const subtitle = mode === "sent" ? ""
+    : mode === "reset" ? "Enter your email and we'll send you a secure reset link."
+    : "Private conversations. A workspace of your own.";
+  const strength = passwordStrength(password);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="modal-panel auth-panel max-w-[400px]">
+      <DialogContent className="modal-panel auth-panel max-w-[420px]">
         <div className="auth-glow" aria-hidden="true" />
         <DialogHeader className="items-center text-center">
-          <img src={emblem} alt="" className="auth-emblem" />
+          {mode === "sent"
+            ? <span className="auth-badge"><MailCheck className="size-6" /></span>
+            : <img src={emblem} alt="Ghost" className="auth-emblem" />}
           <DialogTitle className="text-2xl font-semibold tracking-tight">{title}</DialogTitle>
-          <DialogDescription>{subtitle}</DialogDescription>
+          {subtitle && <DialogDescription>{subtitle}</DialogDescription>}
         </DialogHeader>
 
-        {mode !== "reset" && (
+        {mode === "sent" && sent && (
+          <div className="grid gap-3 text-center">
+            <p className="text-sm text-muted-foreground">
+              {sent.kind === "signup" ? "We sent a confirmation link to" : "We sent a password reset link to"}
+              <br /><strong className="text-foreground">{sent.email}</strong>
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {sent.kind === "signup" ? "Open it to activate your account." : "Open it to choose a new password."} Can't find it? Check spam or promotions.
+            </p>
+            <Button variant="outline" className="h-11 rounded-full" disabled={cooldown > 0 || busy === "resend"} onClick={() => resend(sent.kind, sent.email)}>
+              {busy === "resend" && <Loader2 className="size-4 animate-spin" />}
+              {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend email"}
+            </Button>
+            <button type="button" className="auth-link mx-auto" onClick={() => switchMode("login")}>Back to sign in</button>
+          </div>
+        )}
+
+        {(mode === "login" || mode === "signup") && (
           <>
             <div className="auth-tabs" role="tablist">
               <button type="button" role="tab" aria-selected={mode === "login"} onClick={() => switchMode("login")}>Sign in</button>
               <button type="button" role="tab" aria-selected={mode === "signup"} onClick={() => switchMode("signup")}>Create account</button>
             </div>
-            <Button type="button" variant="outline" className="auth-google h-12 rounded-full" onClick={google} disabled={!!busy}>
-              {busy === "google" ? <Loader2 className="size-4 animate-spin" /> : <GoogleMark />}
-              Continue with Google
-            </Button>
+            <div className="auth-socials">
+              {PROVIDERS.map(({ id, label, Mark }) => (
+                <Button key={id} type="button" variant="outline" className="auth-social" onClick={() => social(id)} disabled={!!busy} aria-label={`Continue with ${label}`}>
+                  {busy === id ? <Loader2 className="size-4 animate-spin" /> : <Mark />}
+                  <span>{label}</span>
+                </Button>
+              ))}
+            </div>
             <div className="auth-divider">or with email</div>
           </>
         )}
 
-        <form onSubmit={submit} className="grid gap-3">
-          <label className="auth-input">
-            <Mail className="size-4" aria-hidden="true" />
-            <span className="sr-only">Email</span>
-            <input type="email" placeholder="Email address" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </label>
-          {mode !== "reset" && (
+        {mode !== "sent" && (
+          <form onSubmit={submit} className="grid gap-3" noValidate={false}>
             <label className="auth-input">
-              <Lock className="size-4" aria-hidden="true" />
-              <span className="sr-only">Password</span>
-              <input
-                type={show ? "text" : "password"}
-                placeholder={mode === "signup" ? "Create a password (8+ characters)" : "Password"}
-                minLength={8}
-                autoComplete={mode === "signup" ? "new-password" : "current-password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <button type="button" className="auth-eye" onClick={() => setShow(!show)} aria-label={show ? "Hide password" : "Show password"}>
-                {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-              </button>
+              <Mail className="size-4" aria-hidden="true" />
+              <span className="sr-only">Email</span>
+              <input type="email" placeholder="Email address" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </label>
-          )}
-          {mode === "login" && (
-            <button type="button" className="auth-link justify-self-end" onClick={() => switchMode("reset")}>Forgot password?</button>
-          )}
-          <Button className="auth-submit h-12 rounded-full" disabled={!!busy}>
-            {busy === "email" && <Loader2 className="size-4 animate-spin" />}
-            {mode === "signup" ? "Create account" : mode === "reset" ? "Send reset link" : "Sign in"}
-          </Button>
-        </form>
+            {mode !== "reset" && (
+              <label className="auth-input">
+                <Lock className="size-4" aria-hidden="true" />
+                <span className="sr-only">Password</span>
+                <input
+                  type={show ? "text" : "password"}
+                  placeholder={mode === "signup" ? `Create a password (${MIN_PASSWORD}+ characters)` : "Password"}
+                  minLength={mode === "signup" ? MIN_PASSWORD : undefined}
+                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <button type="button" className="auth-eye" onClick={() => setShow(!show)} aria-label={show ? "Hide password" : "Show password"}>
+                  {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </label>
+            )}
+            {mode === "signup" && (
+              <>
+                {password && (
+                  <div className="auth-strength" data-score={strength} aria-live="polite">
+                    <div className="auth-strength-bar"><span style={{ width: `${(strength / 4) * 100}%` }} /></div>
+                    <span>{STRENGTH[strength]}</span>
+                  </div>
+                )}
+                <label className="auth-input">
+                  <Lock className="size-4" aria-hidden="true" />
+                  <span className="sr-only">Confirm password</span>
+                  <input type={show ? "text" : "password"} placeholder="Confirm password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
+                </label>
+              </>
+            )}
+            {mode === "login" && (
+              <button type="button" className="auth-link justify-self-end" onClick={() => switchMode("reset")}>Forgot password?</button>
+            )}
+            <Button className="auth-submit h-12 rounded-full" disabled={!!busy}>
+              {busy === "email" && <Loader2 className="size-4 animate-spin" />}
+              {mode === "signup" ? "Create account" : mode === "reset" ? "Send reset link" : "Sign in"}
+            </Button>
+          </form>
+        )}
 
-        {notice && <p role="status" className={`auth-notice ${notice.tone}`}>{notice.text}</p>}
-        {mode === "reset" && <button type="button" className="auth-link mx-auto" onClick={() => switchMode("login")}>Back to sign in</button>}
-        <p className="auth-fine">By continuing you agree to use Ghost responsibly. ABISINYA</p>
+        {notice && (
+          <div role="status" className={`auth-notice ${notice.tone}`}>
+            {notice.text}
+            {notice.unconfirmed && (
+              <button type="button" className="auth-link block mx-auto mt-1" disabled={cooldown > 0} onClick={() => resend("signup", email.trim().toLowerCase())}>
+                {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend confirmation email"}
+              </button>
+            )}
+          </div>
+        )}
+        {mode === "reset" && (
+          <button type="button" className="auth-link mx-auto inline-flex items-center gap-1" onClick={() => switchMode("login")}>
+            <ArrowLeft className="size-3" /> Back to sign in
+          </button>
+        )}
+        <p className="auth-fine">By continuing you agree to use Ghost responsibly · ABISINYA</p>
       </DialogContent>
     </Dialog>
   );
