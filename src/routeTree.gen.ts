@@ -22,6 +22,7 @@ import { Route as ApiImagesRouteImport } from './routes/api/images'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as ChatThreadIdRouteImport } from './routes/chat.$threadId'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
+import { Route as ApiPublicCronVideoNotifyRouteImport } from './routes/api/public/cron/video-notify'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
@@ -93,6 +94,12 @@ const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCronVideoNotifyRoute =
+  ApiPublicCronVideoNotifyRouteImport.update({
+    id: '/api/public/cron/video-notify',
+    path: '/api/public/cron/video-notify',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicTelegramWebhookRoute =
   ApiPublicTelegramWebhookRouteImport.update({
     id: '/api/public/telegram/webhook',
@@ -130,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/chat/$threadId': typeof ChatThreadIdRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/api/public/cron/video-notify': typeof ApiPublicCronVideoNotifyRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -149,6 +157,7 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/chat/$threadId': typeof ChatThreadIdRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/api/public/cron/video-notify': typeof ApiPublicCronVideoNotifyRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -169,6 +178,7 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/chat/$threadId': typeof ChatThreadIdRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/api/public/cron/video-notify': typeof ApiPublicCronVideoNotifyRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -190,6 +200,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/chat/$threadId'
     | '/.lovable/oauth/consent'
+    | '/api/public/cron/video-notify'
     | '/api/public/telegram/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -209,6 +220,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/chat/$threadId'
     | '/.lovable/oauth/consent'
+    | '/api/public/cron/video-notify'
     | '/api/public/telegram/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -228,6 +240,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/chat/$threadId'
     | '/.lovable/oauth/consent'
+    | '/api/public/cron/video-notify'
     | '/api/public/telegram/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -248,6 +261,7 @@ export interface RootRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   ChatThreadIdRoute: typeof ChatThreadIdRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
+  ApiPublicCronVideoNotifyRoute: typeof ApiPublicCronVideoNotifyRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -347,6 +361,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/video-notify': {
+      id: '/api/public/cron/video-notify'
+      path: '/api/public/cron/video-notify'
+      fullPath: '/api/public/cron/video-notify'
+      preLoaderRoute: typeof ApiPublicCronVideoNotifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/telegram/webhook': {
       id: '/api/public/telegram/webhook'
       path: '/api/public/telegram/webhook'
@@ -393,6 +414,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   ChatThreadIdRoute: ChatThreadIdRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
+  ApiPublicCronVideoNotifyRoute: ApiPublicCronVideoNotifyRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
