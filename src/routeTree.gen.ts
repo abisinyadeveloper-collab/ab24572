@@ -13,12 +13,15 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ImagesRouteImport } from './routes/images'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as MusicRouteImport } from './routes/music'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as VideosRouteImport } from './routes/videos'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiImagesRouteImport } from './routes/api/images'
+import { Route as ApiMusicRouteImport } from './routes/api/music'
+import { Route as ApiSpeechRouteImport } from './routes/api/speech'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as ChatThreadIdRouteImport } from './routes/chat.$threadId'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
@@ -46,6 +49,11 @@ const LoginRoute = LoginRouteImport.update({
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MusicRoute = MusicRouteImport.update({
+  id: '/music',
+  path: '/music',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -77,6 +85,16 @@ const ApiChatRoute = ApiChatRouteImport.update({
 const ApiImagesRoute = ApiImagesRouteImport.update({
   id: '/api/images',
   path: '/api/images',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMusicRoute = ApiMusicRouteImport.update({
+  id: '/api/music',
+  path: '/api/music',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSpeechRoute = ApiSpeechRouteImport.update({
+  id: '/api/speech',
+  path: '/api/speech',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
@@ -128,12 +146,15 @@ export interface FileRoutesByFullPath {
   '/images': typeof ImagesRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
+  '/music': typeof MusicRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/videos': typeof VideosRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/api/chat': typeof ApiChatRoute
   '/api/images': typeof ApiImagesRoute
+  '/api/music': typeof ApiMusicRoute
+  '/api/speech': typeof ApiSpeechRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/chat/$threadId': typeof ChatThreadIdRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -148,12 +169,15 @@ export interface FileRoutesByTo {
   '/images': typeof ImagesRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
+  '/music': typeof MusicRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/videos': typeof VideosRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/api/chat': typeof ApiChatRoute
   '/api/images': typeof ApiImagesRoute
+  '/api/music': typeof ApiMusicRoute
+  '/api/speech': typeof ApiSpeechRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/chat/$threadId': typeof ChatThreadIdRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -169,12 +193,15 @@ export interface FileRoutesById {
   '/images': typeof ImagesRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
+  '/music': typeof MusicRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/videos': typeof VideosRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/api/chat': typeof ApiChatRoute
   '/api/images': typeof ApiImagesRoute
+  '/api/music': typeof ApiMusicRoute
+  '/api/speech': typeof ApiSpeechRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/chat/$threadId': typeof ChatThreadIdRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -191,12 +218,15 @@ export interface FileRouteTypes {
     | '/images'
     | '/login'
     | '/mcp'
+    | '/music'
     | '/reset-password'
     | '/sitemap.xml'
     | '/videos'
     | '/.well-known/oauth-protected-resource'
     | '/api/chat'
     | '/api/images'
+    | '/api/music'
+    | '/api/speech'
     | '/auth/callback'
     | '/chat/$threadId'
     | '/.lovable/oauth/consent'
@@ -211,12 +241,15 @@ export interface FileRouteTypes {
     | '/images'
     | '/login'
     | '/mcp'
+    | '/music'
     | '/reset-password'
     | '/sitemap.xml'
     | '/videos'
     | '/.well-known/oauth-protected-resource'
     | '/api/chat'
     | '/api/images'
+    | '/api/music'
+    | '/api/speech'
     | '/auth/callback'
     | '/chat/$threadId'
     | '/.lovable/oauth/consent'
@@ -231,12 +264,15 @@ export interface FileRouteTypes {
     | '/images'
     | '/login'
     | '/mcp'
+    | '/music'
     | '/reset-password'
     | '/sitemap.xml'
     | '/videos'
     | '/.well-known/oauth-protected-resource'
     | '/api/chat'
     | '/api/images'
+    | '/api/music'
+    | '/api/speech'
     | '/auth/callback'
     | '/chat/$threadId'
     | '/.lovable/oauth/consent'
@@ -252,12 +288,15 @@ export interface RootRouteChildren {
   ImagesRoute: typeof ImagesRoute
   LoginRoute: typeof LoginRoute
   McpRoute: typeof McpRoute
+  MusicRoute: typeof MusicRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   VideosRoute: typeof VideosRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiImagesRoute: typeof ApiImagesRoute
+  ApiMusicRoute: typeof ApiMusicRoute
+  ApiSpeechRoute: typeof ApiSpeechRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   ChatThreadIdRoute: typeof ChatThreadIdRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
@@ -296,6 +335,13 @@ declare module '@tanstack/react-router' {
       path: '/mcp'
       fullPath: '/mcp'
       preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/music': {
+      id: '/music'
+      path: '/music'
+      fullPath: '/music'
+      preLoaderRoute: typeof MusicRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -338,6 +384,20 @@ declare module '@tanstack/react-router' {
       path: '/api/images'
       fullPath: '/api/images'
       preLoaderRoute: typeof ApiImagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/music': {
+      id: '/api/music'
+      path: '/api/music'
+      fullPath: '/api/music'
+      preLoaderRoute: typeof ApiMusicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/speech': {
+      id: '/api/speech'
+      path: '/api/speech'
+      fullPath: '/api/speech'
+      preLoaderRoute: typeof ApiSpeechRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/callback': {
@@ -404,6 +464,7 @@ const rootRouteChildren: RootRouteChildren = {
   ImagesRoute: ImagesRoute,
   LoginRoute: LoginRoute,
   McpRoute: McpRoute,
+  MusicRoute: MusicRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   VideosRoute: VideosRoute,
@@ -411,6 +472,8 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   ApiChatRoute: ApiChatRoute,
   ApiImagesRoute: ApiImagesRoute,
+  ApiMusicRoute: ApiMusicRoute,
+  ApiSpeechRoute: ApiSpeechRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   ChatThreadIdRoute: ChatThreadIdRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,

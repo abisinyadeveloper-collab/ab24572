@@ -34,7 +34,10 @@ import {
   Plug,
   Copy,
   RotateCcw,
+  Music,
 } from "lucide-react";
+import { GhostMusic } from "./ghost-music";
+import { SpeakButton } from "./ghost-speak";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -116,7 +119,7 @@ import { runWebMCPTool } from "@/lib/webmcp-telemetry";
 type Thread = { id: string; title: string; updated_at: string };
 const agentIcons = [Workflow, Code2, ScanLine, ShieldCheck, BookOpen, Scale];
 
-export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: string; initialView?: "chat" | "image" | "video" }) {
+export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: string; initialView?: "chat" | "image" | "video" | "music" }) {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
@@ -135,8 +138,8 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
     }),
   });
   const view = initialView;
-  function setView(next: "chat" | "image" | "video") {
-    void navigate({ to: next === "image" ? "/images" : next === "video" ? "/videos" : "/" });
+  function setView(next: "chat" | "image" | "video" | "music") {
+    void navigate({ to: next === "image" ? "/images" : next === "video" ? "/videos" : next === "music" ? "/music" : "/" });
   }
   const [panel, setPanel] = useState<"capabilities" | "models" | "profile" | "connections" | "activity" | null>(null);
   const [initialMessages, setInitialMessages] = useState<UIMessage[] | null>(threadId ? null : []);
@@ -378,6 +381,9 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
               <Button variant="ghost" className={`nav-item ${view === "video" ? "active" : ""}`} onClick={() => { setView("video"); setMobileOpen(false); }}>
                 <Film />Videos
               </Button>
+              <Button variant="ghost" className={`nav-item ${view === "music" ? "active" : ""}`} onClick={() => { setView("music"); setMobileOpen(false); }}>
+                <Music />Music
+              </Button>
               <Button variant="ghost" className="nav-item" onClick={() => (user ? setPanel("activity") : setAuthOpen(true))}>
                 <ScanLine />Activity
               </Button>
@@ -460,7 +466,7 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
               >
                 {mobileOpen ? <X /> : <Menu />}
               </Button>
-              {view === "chat" ? <TierPicker /> : <strong className="tier-trigger">{view === "image" ? "Images" : "Videos"}</strong>}
+              {view === "chat" ? <TierPicker /> : <strong className="tier-trigger">{view === "image" ? "Images" : view === "music" ? "Music" : "Videos"}</strong>}
             </div>
             <div className="topbar-right">
               <button type="button" className="top-avatar" aria-label="Account" onClick={() => (user ? setPanel("profile") : setAuthOpen(true))}>
@@ -469,8 +475,10 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
             </div>
           </header>
           <section className="workspace-body">
-            {view !== "chat" ? (
-              <GhostStudio key={view} userId={user?.id} onSignIn={() => setAuthOpen(true)} initialMode={view} />
+            {view === "music" ? (
+              <GhostMusic userId={user?.id} onSignIn={() => setAuthOpen(true)} />
+            ) : view !== "chat" ? (
+              <GhostStudio key={view} userId={user?.id} onSignIn={() => setAuthOpen(true)} initialMode={view === "video" ? "video" : "image"} />
             ) : threadId && user && initialMessages ? (
               <GhostChat
                 key={`${user.id}-${threadId}`}
@@ -1011,7 +1019,7 @@ function GhostChat({
                   ) : null,
                 )}
               </MessageContent>
-              {m.role === "assistant" && !busy && <div className="message-actions"><Button size="icon-sm" variant="ghost" title="Copy answer" aria-label="Copy answer" onClick={() => void navigator.clipboard.writeText(m.parts.filter(p => p.type === "text").map(p => p.text).join("\n"))}><Copy/></Button>{typeof navigator !== "undefined" && "share" in navigator && <Button size="icon-sm" variant="ghost" title="Share answer" aria-label="Share answer" onClick={() => void navigator.share({ title: "Ghost", text: m.parts.filter(p => p.type === "text").map(p => p.text).join("\n") }).catch(() => {})}><Share2/></Button>}{m.id === messages.at(-1)?.id && <Button size="icon-sm" variant="ghost" title="Regenerate answer" aria-label="Regenerate answer" onClick={() => void regenerate()}><RotateCcw/></Button>}</div>}
+              {m.role === "assistant" && !busy && <div className="message-actions"><SpeakButton text={m.parts.filter(p => p.type === "text").map(p => p.text).join("\n")} /><Button size="icon-sm" variant="ghost" title="Copy answer" aria-label="Copy answer" onClick={() => void navigator.clipboard.writeText(m.parts.filter(p => p.type === "text").map(p => p.text).join("\n"))}><Copy/></Button>{typeof navigator !== "undefined" && "share" in navigator && <Button size="icon-sm" variant="ghost" title="Share answer" aria-label="Share answer" onClick={() => void navigator.share({ title: "Ghost", text: m.parts.filter(p => p.type === "text").map(p => p.text).join("\n") }).catch(() => {})}><Share2/></Button>}{m.id === messages.at(-1)?.id && <Button size="icon-sm" variant="ghost" title="Regenerate answer" aria-label="Regenerate answer" onClick={() => void regenerate()}><RotateCcw/></Button>}</div>}
             </Message>
           ))}
           {queued.map((q) => (
