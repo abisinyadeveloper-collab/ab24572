@@ -8,3 +8,5 @@
 - [x] Agent integrations (MCP) with sign-in consent
 - [x] Modern live voice: reactive orb, clear states (connecting/listening/thinking/speaking/error), retry
 - [x] Device permissions: camera, screen share, location, notifications, share/clipboard/vibration + profile permissions screen
+- [x] Google Search Console: verify custom domain, add sitemap, submit it
+- [ ] Modernize sign-in: remove Lovable sign-in option and Lovable branding, use custom domain
