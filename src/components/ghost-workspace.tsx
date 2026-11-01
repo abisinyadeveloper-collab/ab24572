@@ -588,20 +588,19 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
               <div className="capability-row">
                 <span className="capability-status">01 / DRAFT & REASON</span>
                 <p>
-                  <strong>GPT-6 Astra</strong>
+                  <strong>Ghost Reasoning</strong>
                 </p>
                 <p>Develops a first perspective using your complete conversation.</p>
               </div>
               <div className="capability-row">
                 <span className="capability-status">02 / REVIEW & SYNTHESIZE</span>
                 <p>
-                  <strong>Claude Fable 5.1</strong>
+                  <strong>Ghost Synthesis</strong>
                 </p>
                 <p>Reviews the draft and writes Ghost’s final response.</p>
               </div>
               <p className="form-note">
-                Ghost coordinates existing models; it is not a newly trained model. Both calls use
-                AI credits. Public web search is connected; Ghost does not run code on your computer.
+                Public web search is connected; Ghost does not run code on your computer.
               </p>
             </>
           ) : panel === "profile" ? (

@@ -68,7 +68,7 @@ export function GhostActivity() {
         <div key={r.id} className="activity-row">
           <div><strong>{r.source === "voice" ? "Voice" : "Chat"} · {r.tier}</strong><span className={r.ok ? "text-signal" : "voice-error"}>{r.ok ? "Done" : "Failed"}</span></div>
           <p>{new Date(r.created_at).toLocaleString()} · {(r.duration_ms / 1000).toFixed(1)}s{r.input_tokens != null ? ` · ${r.input_tokens} in / ${r.output_tokens ?? 0} out tokens` : ""}</p>
-          <p>{r.models.map((m) => m.split("/")[1]).join(" → ") || "—"}{r.tools.length ? ` · tools: ${r.tools.join(", ")}` : ""}</p>
+          <p>{r.models.length ? `Ghost · ${r.models.length} step${r.models.length > 1 ? "s" : ""}` : "—"}{r.tools.length ? ` · tools: ${r.tools.join(", ")}` : ""}</p>
         </div>
       ))}
     </div>

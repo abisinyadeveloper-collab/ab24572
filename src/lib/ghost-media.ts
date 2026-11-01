@@ -1,6 +1,9 @@
 export const MEDIA_MODELS = { image: "openai/gpt-image-2.5-sunburst", video: "google/gemini-omni-1.1-flash" } as const;
 export const voiceLanguages = [
   { id: "am", name: "አማርኛ · Amharic", greeting: "ሰላም! እኔ ጎስት ነኝ። ዛሬ በምን ልረዳዎት?" },
+  { id: "om", name: "Afaan Oromoo · Oromo", greeting: "Akkam! Ani Ghost dha. Har'a maaliin si gargaaruu danda'a?" },
+  { id: "ti", name: "ትግርኛ · Tigrinya", greeting: "ሰላም! ኣነ ጎስት እየ። ሎሚ ብምንታይ ክሕግዘካ?" },
+  { id: "so", name: "Soomaali · Somali", greeting: "Salaan! Waxaan ahay Ghost. Maxaan maanta kaa caawin karaa?" },
   { id: "en", name: "English", greeting: "Hello, I’m Ghost. What can I help you with today?" },
   { id: "sw", name: "Kiswahili", greeting: "Habari! Mimi ni Ghost. Nikusaidie nini leo?" },
   { id: "ar", name: "العربية · Arabic", greeting: "مرحباً، أنا غوست. كيف يمكنني مساعدتك اليوم؟" },
