@@ -101,7 +101,7 @@ export async function sweepVideos(limit = 10) {
       if (!claimed?.length || !(await notificationsEnabled(row.user_id))) continue;
       const user = await account(row.user_id);
       if (!user?.email) continue;
-      const r = await send("video-ready", user.email, `video-ready-${row.id}`, { prompt: claimed[0].prompt });
+      const r = await send("video-ready", user.email, `video-ready-${row.id}`, { prompt: claimed[0]?.prompt });
       if (r.sent) emailed++;
     } catch (error) {
       console.error("[ghost-notify] video sweep", row.id, error);
