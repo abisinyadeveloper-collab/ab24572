@@ -600,6 +600,32 @@
   .auth-notice.ok { background: color-mix(in oklab, var(--primary) 10%, transparent); color: var(--primary); }
   .auth-notice.error { background: color-mix(in oklab, var(--destructive) 10%, transparent); color: var(--destructive); }
   .auth-fine { font-size: 11px; text-align: center; color: var(--muted-foreground); }
+  .auth-socials { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .auth-social { height: 46px; border-radius: 999px; gap: 8px; font-weight: 600; font-size: 13px; padding: 0 10px; }
+  .auth-badge {
+    display: grid; place-items: center; width: 56px; height: 56px; border-radius: 18px; margin-bottom: 6px;
+    background: color-mix(in oklab, var(--primary) 12%, transparent); color: var(--primary);
+  }
+  .auth-strength { display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--muted-foreground); padding: 0 8px; }
+  .auth-strength-bar { flex: 1; height: 4px; border-radius: 999px; background: var(--muted); overflow: hidden; }
+  .auth-strength-bar span { display: block; height: 100%; border-radius: 999px; background: var(--destructive); transition: width .25s ease, background .25s ease; }
+  .auth-strength[data-score="2"] .auth-strength-bar span { background: color-mix(in oklab, var(--primary) 55%, var(--destructive)); }
+  .auth-strength[data-score="3"] .auth-strength-bar span,
+  .auth-strength[data-score="4"] .auth-strength-bar span { background: var(--primary); }
+  .auth-page {
+    min-height: 100dvh; display: grid; place-items: center; padding: 24px;
+    background: radial-gradient(60% 40% at 50% 0%, color-mix(in oklab, var(--primary) 12%, transparent), transparent), var(--background);
+  }
+  .auth-card {
+    position: relative; overflow: hidden; width: 100%; max-width: 420px; display: grid; gap: 18px;
+    padding: 32px 28px 22px; border-radius: 28px; background: var(--card); border: 1px solid var(--border); box-shadow: var(--panel-shadow);
+  }
+  .auth-card > :not(.auth-glow) { position: relative; }
+  .auth-submit-link {
+    display: inline-flex; align-items: center; justify-content: center; height: 46px; border-radius: 999px;
+    background: var(--primary); color: var(--primary-foreground); font-weight: 600; font-size: 14px;
+  }
+  @media (max-width: 420px) { .auth-social span { display: none; } }
   .avatar-upload {
     display: flex;
     align-items: center;
