@@ -91,7 +91,11 @@
     "use-webmcp-tool": "^0.3.0",
     "vaul": "^1.1.2",
     "vite-tsconfig-paths": "^6.0.2",
-    "zod": "^4.6.7"
+    "zod": "^4.6.7",
+    "@lovable.dev/email-js": "0.4.0",
+    "@lovable.dev/webhooks-js": "0.0.3",
+    "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.0.10"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.3",
@@ -122,5 +126,10 @@
     "vite-plugin-pwa": "^2.0.0",
     "vitest": "^4.1.10",
     "ws": "^8.22.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "entities": "4.5.0"
+    }
   }
 }
