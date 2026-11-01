@@ -77,10 +77,12 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+      { name: 'google-site-verification', content: 'VQF-TWbfqpDa4_mlokmChRfQGhDhB0AVVVBSXk7m45A' },
       { title: 'ABISINYA GHOST — Intelligence workspace' },
       { name: 'description', content: 'Your workspace for thoughtful coding, planning, and defensive analysis.' },
       { property: 'og:type', content: 'website' },
