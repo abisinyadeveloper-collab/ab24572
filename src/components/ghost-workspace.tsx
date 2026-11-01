@@ -478,7 +478,7 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
             {view === "music" ? (
               <GhostMusic userId={user?.id} onSignIn={() => setAuthOpen(true)} />
             ) : view !== "chat" ? (
-              <GhostStudio key={view} userId={user?.id} onSignIn={() => setAuthOpen(true)} initialMode={view} />
+              <GhostStudio key={view} userId={user?.id} onSignIn={() => setAuthOpen(true)} initialMode={view === "video" ? "video" : "image"} />
             ) : threadId && user && initialMessages ? (
               <GhostChat
                 key={`${user.id}-${threadId}`}

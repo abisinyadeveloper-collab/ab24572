@@ -28,7 +28,7 @@ export function GhostStudio({ userId, onSignIn, initialMode = "image" }: { userI
 
   async function refresh() {
     if (!userId) { setItems([]); return; }
-    const { data, error } = await supabase.from("ghost_media").select("id,kind,prompt,path,status,error").order("created_at", { ascending: false }).limit(50);
+    const { data, error } = await supabase.from("ghost_media").select("id,kind,prompt,path,status,error").neq("kind", "music").order("created_at", { ascending: false }).limit(50);
     if (error) { setNote(error.message); return; }
     const rows = await Promise.all((data ?? []).map(async item => ({ ...item, src: item.path ? (await supabase.storage.from("ghost-media").createSignedUrl(item.path, 3600)).data?.signedUrl : undefined })));
     setItems(rows);
