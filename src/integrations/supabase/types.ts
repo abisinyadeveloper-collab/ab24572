@@ -80,6 +80,30 @@ export type Database = {
         }
         Relationships: []
       }
+      ghost_devices: {
+        Row: {
+          created_at: string
+          device_id: string
+          label: string
+          last_seen_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          label?: string
+          last_seen_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          label?: string
+          last_seen_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ghost_media: {
         Row: {
           created_at: string
@@ -87,6 +111,7 @@ export type Database = {
           gateway_id: string | null
           id: string
           kind: string
+          notified_at: string | null
           path: string | null
           prompt: string
           status: string
@@ -98,6 +123,7 @@ export type Database = {
           gateway_id?: string | null
           id?: string
           kind: string
+          notified_at?: string | null
           path?: string | null
           prompt: string
           status?: string
@@ -109,6 +135,7 @@ export type Database = {
           gateway_id?: string | null
           id?: string
           kind?: string
+          notified_at?: string | null
           path?: string | null
           prompt?: string
           status?: string
@@ -134,6 +161,27 @@ export type Database = {
           fact?: string
           id?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      ghost_notify_state: {
+        Row: {
+          created_at: string
+          password_notified_at: string | null
+          user_id: string
+          welcome_sent_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          password_notified_at?: string | null
+          user_id: string
+          welcome_sent_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          password_notified_at?: string | null
+          user_id?: string
+          welcome_sent_at?: string | null
         }
         Relationships: []
       }
@@ -165,16 +213,19 @@ export type Database = {
         Row: {
           avatar_url: string
           display_name: string
+          email_notifications: boolean
           id: string
         }
         Insert: {
           avatar_url?: string
           display_name?: string
+          email_notifications?: boolean
           id: string
         }
         Update: {
           avatar_url?: string
           display_name?: string
+          email_notifications?: boolean
           id?: string
         }
         Relationships: []
