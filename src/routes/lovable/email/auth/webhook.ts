@@ -9,7 +9,7 @@ import { EmailChangeEmail } from '@/lib/email-templates/email-change'
 import { ReauthenticationEmail } from '@/lib/email-templates/reauthentication'
 
 // Configuration
-const SITE_NAME = "GHOST"
+const SITE_NAME = "Ghost"
 const SENDER_DOMAIN = "notify.ghosts.abisinyabet.com"
 const ROOT_DOMAIN = "ghosts.abisinyabet.com"
 const FROM_DOMAIN = "ghosts.abisinyabet.com"
