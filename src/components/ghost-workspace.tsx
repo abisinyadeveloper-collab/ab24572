@@ -142,12 +142,22 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
   const [initialMessages, setInitialMessages] = useState<UIMessage[] | null>(threadId ? null : []);
   const [loadError, setLoadError] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [emailNotes, setEmailNotes] = useState(true);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [avatarPath, setAvatarPath] = useState("");
   const [avatarSrc, setAvatarSrc] = useState("");
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [profileNote, setProfileNote] = useState("");
   const [working, setWorking] = useState(false);
+  useEffect(() => {
+    if (!user?.id) return;
+    let deviceId = "";
+    try {
+      deviceId = localStorage.getItem("ghost:device-id") || "";
+      if (!deviceId) { deviceId = crypto.randomUUID(); localStorage.setItem("ghost:device-id", deviceId); }
+    } catch { return; }
+    void registerGhostSignIn({ data: { deviceId, userAgent: navigator.userAgent.slice(0, 400) } }).catch(() => undefined);
+  }, [user?.id]);
   useEffect(() => {
     let live = true;
     void supabase.auth.getSession().then(({ data }) => {

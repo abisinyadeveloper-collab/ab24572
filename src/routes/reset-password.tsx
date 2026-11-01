@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { CheckCircle2, Eye, EyeOff, Loader2, Lock, TriangleAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { notifyGhostPasswordChanged } from "@/lib/ghost-notify.functions";
 import { friendlyAuthError, passwordIssue, passwordStrength, MIN_PASSWORD, readAuthLink } from "@/lib/auth-rules";
 import emblem from "@/assets/ghost-emblem.jpg";
 
@@ -60,6 +61,7 @@ function Reset() {
     setBusy(false);
     if (err) return setError(friendlyAuthError(err.message).text);
     setState("done");
+    void notifyGhostPasswordChanged().catch(() => undefined);
     setTimeout(() => window.location.replace("/"), 2000);
   }
 
