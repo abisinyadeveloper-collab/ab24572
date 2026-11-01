@@ -23,6 +23,8 @@ import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as ChatThreadIdRouteImport } from './routes/chat.$threadId'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -96,6 +98,16 @@ const ApiPublicTelegramWebhookRoute =
     path: '/api/public/telegram/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -112,6 +124,8 @@ export interface FileRoutesByFullPath {
   '/chat/$threadId': typeof ChatThreadIdRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -128,6 +142,8 @@ export interface FileRoutesByTo {
   '/chat/$threadId': typeof ChatThreadIdRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -145,6 +161,8 @@ export interface FileRoutesById {
   '/chat/$threadId': typeof ChatThreadIdRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -163,6 +181,8 @@ export interface FileRouteTypes {
     | '/chat/$threadId'
     | '/.lovable/oauth/consent'
     | '/api/public/telegram/webhook'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -179,6 +199,8 @@ export interface FileRouteTypes {
     | '/chat/$threadId'
     | '/.lovable/oauth/consent'
     | '/api/public/telegram/webhook'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
   id:
     | '__root__'
     | '/'
@@ -195,6 +217,8 @@ export interface FileRouteTypes {
     | '/chat/$threadId'
     | '/.lovable/oauth/consent'
     | '/api/public/telegram/webhook'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -212,6 +236,8 @@ export interface RootRouteChildren {
   ChatThreadIdRoute: typeof ChatThreadIdRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
+  LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
+  LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -314,6 +340,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/webhook': {
+      id: '/lovable/email/auth/webhook'
+      path: '/lovable/email/auth/webhook'
+      fullPath: '/lovable/email/auth/webhook'
+      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -333,6 +373,8 @@ const rootRouteChildren: RootRouteChildren = {
   ChatThreadIdRoute: ChatThreadIdRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
+  LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
+  LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
