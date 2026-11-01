@@ -81,7 +81,7 @@ export function GhostAuth({ open, onOpenChange, next }: { open: boolean; onOpenC
               <button type="button" role="tab" aria-selected={mode === "login"} onClick={() => switchMode("login")}>Sign in</button>
               <button type="button" role="tab" aria-selected={mode === "signup"} onClick={() => switchMode("signup")}>Create account</button>
             </div>
-            <Button type="button" variant="outline" className="auth-google" onClick={google} disabled={!!busy}>
+            <Button type="button" variant="outline" className="auth-google h-12 rounded-full" onClick={google} disabled={!!busy}>
               {busy === "google" ? <Loader2 className="size-4 animate-spin" /> : <GoogleMark />}
               Continue with Google
             </Button>
@@ -116,7 +116,7 @@ export function GhostAuth({ open, onOpenChange, next }: { open: boolean; onOpenC
           {mode === "login" && (
             <button type="button" className="auth-link justify-self-end" onClick={() => switchMode("reset")}>Forgot password?</button>
           )}
-          <Button className="auth-submit" disabled={!!busy}>
+          <Button className="auth-submit h-12 rounded-full" disabled={!!busy}>
             {busy === "email" && <Loader2 className="size-4 animate-spin" />}
             {mode === "signup" ? "Create account" : mode === "reset" ? "Send reset link" : "Sign in"}
           </Button>

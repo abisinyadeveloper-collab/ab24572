@@ -573,13 +573,15 @@
     background: radial-gradient(closest-side, color-mix(in oklab, var(--primary) 22%, transparent), transparent);
     filter: blur(20px);
   }
-  .auth-panel > * { position: relative; }
+  .auth-panel > :not(.auth-glow) { position: relative; }
   .auth-emblem { width: 56px; height: 56px; border-radius: 18px; object-fit: cover; box-shadow: var(--panel-shadow); margin-bottom: 6px; }
   .auth-tabs {
     display: grid; grid-template-columns: 1fr 1fr; padding: 4px; border-radius: 999px;
     background: var(--muted); border: 1px solid var(--border);
   }
   .auth-tabs button { border-radius: 999px; padding: 8px 0; font-size: 13px; font-weight: 600; color: var(--muted-foreground); transition: all .2s ease; }
+  .auth-tabs button:focus-visible { outline: 2px solid var(--primary); }
+  .auth-tabs button { outline: none; }
   .auth-tabs button[aria-selected="true"] { background: var(--card); color: var(--foreground); box-shadow: 0 1px 4px color-mix(in oklab, var(--foreground) 10%, transparent); }
   .auth-google { height: 46px; border-radius: 999px; gap: 10px; font-weight: 600; }
   .auth-input {
