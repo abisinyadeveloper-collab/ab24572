@@ -102,8 +102,7 @@ export function GhostAuth({ open, onOpenChange, next }: { open: boolean; onOpenC
   async function social(provider: Provider) {
     setBusy(provider);
     setNotice(null);
-    try { sessionStorage.setItem("ghost:next", nextPath); } catch { /* storage blocked */ }
-    const result = await lovable.auth.signInWithOAuth(provider, { redirect_uri: window.location.origin });
+    const result = await lovable.auth.signInWithOAuth(provider, { redirect_uri: new URL(nextPath, window.location.origin).href });
     if (result.error) { fail(result.error); setBusy(""); }
     else if (!result.redirected) { setBusy(""); onOpenChange(false); }
   }
