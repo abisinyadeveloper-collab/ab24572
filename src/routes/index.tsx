@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { GhostWorkspace } from "@/components/ghost-workspace";
 export const Route = createFileRoute("/")({
+  staticData: { sitemap: true },
   head: () => ({
     meta: [
       { title: "Ghost — Chat, create, and explore" },

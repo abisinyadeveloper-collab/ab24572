@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { GhostWorkspace } from "@/components/ghost-workspace";
 export const Route = createFileRoute("/chat/$threadId")({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Conversation — ABISINYA GHOST" },
