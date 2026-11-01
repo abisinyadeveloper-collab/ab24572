@@ -105,6 +105,8 @@ function TierPicker() {
 import ghostMark from "@/assets/ghost-emblem.jpg";
 import { useWebMCP } from "use-webmcp-tool";
 import { GhostPermissions } from "./ghost-permissions";
+import { registerGhostSignIn } from "@/lib/ghost-notify.functions";
+import { Switch } from "@/components/ui/switch";
 import { ToolsSheet } from "./ghost-tools-sheet";
 import { Camera as CameraIcon, MonitorUp, Share2, X as XIcon } from "lucide-react";
 import { haptic, notify, currentLocation, compressImage, captureScreen, runPhoneAction } from "@/lib/device-permissions";
@@ -140,12 +142,22 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
   const [initialMessages, setInitialMessages] = useState<UIMessage[] | null>(threadId ? null : []);
   const [loadError, setLoadError] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [emailNotes, setEmailNotes] = useState(true);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [avatarPath, setAvatarPath] = useState("");
   const [avatarSrc, setAvatarSrc] = useState("");
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [profileNote, setProfileNote] = useState("");
   const [working, setWorking] = useState(false);
+  useEffect(() => {
+    if (!user?.id) return;
+    let deviceId = "";
+    try {
+      deviceId = localStorage.getItem("ghost:device-id") || "";
+      if (!deviceId) { deviceId = crypto.randomUUID(); localStorage.setItem("ghost:device-id", deviceId); }
+    } catch { return; }
+    void registerGhostSignIn({ data: { deviceId, userAgent: navigator.userAgent.slice(0, 400) } }).catch(() => undefined);
+  }, [user?.id]);
   useEffect(() => {
     let live = true;
     void supabase.auth.getSession().then(({ data }) => {
@@ -207,12 +219,13 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
       });
     void supabase
       .from("profiles")
-      .select("display_name,avatar_url")
+      .select("display_name,avatar_url,email_notifications")
       .eq("id", user.id)
       .maybeSingle()
       .then(async ({ data }) => {
         if (!live) return;
         setDisplayName(data?.display_name || "");
+        setEmailNotes(data?.email_notifications ?? true);
         const stored = data?.avatar_url || "";
         if (stored.startsWith("avatars:")) {
           const path = stored.slice("avatars:".length);
@@ -646,6 +659,21 @@ export function GhostWorkspace({ threadId, initialView = "chat" }: { threadId?: 
                   <p className="form-note">{user.email}</p>
                   <GhostMemories />
                   <GhostPermissions />
+                  <div className="mt-4 flex items-start justify-between gap-4 rounded-2xl border p-4">
+                    <div>
+                      <p className="text-sm font-semibold">Email notifications</p>
+                      <p className="form-note">Emails when a video is ready or someone signs in from a new device. Password-change notices always send.</p>
+                    </div>
+                    <Switch
+                      checked={emailNotes}
+                      aria-label="Email notifications"
+                      onCheckedChange={async (v) => {
+                        setEmailNotes(v);
+                        const { error } = await supabase.from("profiles").upsert({ id: user.id, email_notifications: v });
+                        if (error) { setEmailNotes(!v); setProfileNote(error.message); }
+                      }}
+                    />
+                  </div>
                   <div className="mt-5 flex justify-between gap-3">
                     <Button type="submit">
                       <Check />

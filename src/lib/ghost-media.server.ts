@@ -83,7 +83,7 @@ export async function startGhostVideo(userId: string, prompt: string, resolution
     throw error;
   }
 }
-export async function checkGhostVideo(userId: string, id: string) {
+export async function checkGhostVideo(userId: string, id: string, source: "app" | "background" = "app") {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: row, error } = await supabaseAdmin.from("ghost_media").select("*").eq("id", id).eq("user_id", userId).single();
   if (error || !row) throw new Error("Video not found.");
@@ -103,7 +103,8 @@ export async function checkGhostVideo(userId: string, id: string) {
         if (upload) throw new Error("Your video is ready but could not be saved. Check again.");
       }
     }
-    const update = { status: job.status, path, error: job.error?.message ?? null };
+    // Seen in the app: no "video ready" email needed. Background sweeps leave it for the email step.
+    const update = { status: job.status, path, error: job.error?.message ?? null, ...(job.status === "completed" && source === "app" ? { notified_at: new Date().toISOString() } : {}) };
     const { error: saved } = await supabaseAdmin.from("ghost_media").update(update).eq("id", row.id);
     if (saved) throw new Error("Could not save video progress.");
     return { ...row, ...update };
