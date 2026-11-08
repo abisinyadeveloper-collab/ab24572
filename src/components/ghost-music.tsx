@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { MUSIC_PRESETS } from "@/lib/ghost-audio";
 
-type Track = { id: string; prompt: string; path: string | null; src?: string | undefined };
+type Track = { id: string; prompt: string; path: string | null; status: string; error: string | null; src?: string | undefined };
 
 export function GhostMusic({ userId, onSignIn }: { userId?: string | undefined; onSignIn: () => void }) {
   const [prompt, setPrompt] = useState("");
@@ -17,7 +17,7 @@ export function GhostMusic({ userId, onSignIn }: { userId?: string | undefined; 
 
   async function refresh() {
     if (!userId) { setTracks([]); return; }
-    const { data, error } = await supabase.from("ghost_media").select("id,prompt,path").eq("kind", "music").order("created_at", { ascending: false }).limit(50);
+    const { data, error } = await supabase.from("ghost_media").select("id,prompt,path,status,error").eq("kind", "music").order("created_at", { ascending: false }).limit(50);
     if (error) { setNote(error.message); return; }
     setTracks(await Promise.all((data ?? []).map(async t => ({ ...t, src: t.path ? (await supabase.storage.from("ghost-media").createSignedUrl(t.path, 3600)).data?.signedUrl : undefined }))));
   }
@@ -30,16 +30,19 @@ export function GhostMusic({ userId, onSignIn }: { userId?: string | undefined; 
     setBusy(true); setNote(length === "full" ? "Composing your full song… this can take a minute or two." : "Composing your 30-second clip…");
     try {
       const { data } = await supabase.auth.getSession();
-      const res = await fetch("/api/music", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session?.access_token ?? ""}` }, body: JSON.stringify({ prompt, vocals, lyrics: vocals ? lyrics : "", length }) });
-      const body = await res.json().catch(() => ({})) as { message?: string };
-      if (!res.ok) throw new Error(body.message ?? "Ghost could not create this track.");
+      if (!data.session) { onSignIn(); return; }
+      const res = await fetch("/api/music", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` }, body: JSON.stringify({ requestId: crypto.randomUUID(), prompt, vocals, lyrics: vocals ? lyrics : "", length }) });
+      const body = await res.json().catch(() => ({})) as { message?: string; error?: string };
+      if (!res.ok) throw new Error(body.message ?? body.error ?? "Ghost could not create this track.");
+      if (res.status === 202) { setNote("This track is already composing. No duplicate track was started."); await refresh(); return; }
       setNote("Saved to your music library."); await refresh();
     } catch (error) { setNote(error instanceof Error ? error.message : "Ghost could not create this track."); }
     finally { setBusy(false); }
   }
   async function remove(t: Track) {
-    if (t.path) await supabase.storage.from("ghost-media").remove([t.path]);
-    await supabase.from("ghost_media").delete().eq("id", t.id);
+    if (t.path) { const { error } = await supabase.storage.from("ghost-media").remove([t.path]); if (error) { setNote(error.message); return; } }
+    const { error } = await supabase.from("ghost_media").delete().eq("id", t.id);
+    if (error) { setNote(error.message); return; }
     await refresh();
   }
 
@@ -66,10 +69,11 @@ export function GhostMusic({ userId, onSignIn }: { userId?: string | undefined; 
         {tracks.map(t => (
           <div key={t.id} className="rounded-2xl border bg-card p-3">
             <p className="mb-2 line-clamp-2 text-sm">{t.prompt}</p>
+            {!t.src && <p className="text-sm text-muted-foreground">{t.error ?? (t.status === "in_progress" ? "Composing…" : "Track unavailable.")}</p>}
             {t.src && <audio controls preload="none" src={t.src} className="w-full" />}
             <div className="mt-2 flex gap-2">
               {t.src && <Button asChild size="sm" variant="ghost"><a href={t.src} download="ghost-track.mp3"><Download />Download</a></Button>}
-              <Button size="sm" variant="ghost" onClick={() => void remove(t)}><Trash2 />Delete</Button>
+              <Button size="sm" variant="ghost" disabled={t.status === "in_progress"} onClick={() => void remove(t)}><Trash2 />Delete</Button>
             </div>
           </div>
         ))}

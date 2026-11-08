@@ -37,6 +37,7 @@ import {
   Music,
 } from "lucide-react";
 import { GhostMusic } from "./ghost-music";
+import { videoPollDelay } from "@/lib/media-polling";
 import { SpeakButton } from "./ghost-speak";
 import { Button } from "@/components/ui/button";
 import {
@@ -830,10 +831,18 @@ function ChatMedia({ media }: { media: ChatMediaData }) {
     if (media.kind !== "video" || !media.id) return;
     let live = true;
     let timer: ReturnType<typeof setTimeout>;
+    let failures = 0;
     async function check() {
       try {
-        const row = (await pollVideo({ data: { id: media.id ?? "" } })) as { status: string; error: string | null; path: string | null };
+        const row = await pollVideo({ data: { id: media.id ?? "" } });
         if (!live) return;
+        if ("httpStatus" in row) {
+          setStatus("failed"); setFailure(row.error);
+          const delay = videoPollDelay(row.httpStatus, failures++);
+          if (delay !== null) timer = setTimeout(check, delay);
+          return;
+        }
+        failures = 0;
         setStatus(row.status);
         setFailure(row.error ?? "");
         if (row.status === "completed" && row.path) {
@@ -842,8 +851,12 @@ function ChatMedia({ media }: { media: ChatMediaData }) {
           return;
         }
         if (row.status === "failed") return;
-      } catch {
-        if (live) { setStatus("in_progress"); setFailure(""); }
+      } catch (error) {
+        if (live) {
+          setStatus("failed"); setFailure(error instanceof Error ? error.message : "Could not check video progress.");
+          if (error instanceof TypeError) { const delay = videoPollDelay(503, failures++); if (delay !== null) timer = setTimeout(check, delay); }
+        }
+        return;
       }
       if (live) timer = setTimeout(check, 8000);
     }

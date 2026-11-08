@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { streamImage } from "@/lib/stream-image";
 import { generateGhostVideo, pollGhostVideo } from "@/lib/ghost-media.functions";
+import { videoPollDelay } from "@/lib/media-polling";
 
 type Media = { id: string; kind: string; prompt: string; path: string | null; status: string; error: string | null; src?: string | undefined };
 export function GhostStudio({ userId, onSignIn, initialMode = "image" }: { userId?: string | undefined; onSignIn: () => void; initialMode?: "image" | "video" }) {
@@ -23,6 +24,7 @@ export function GhostStudio({ userId, onSignIn, initialMode = "image" }: { userI
   const [note, setNote] = useState("");
   const [items, setItems] = useState<Media[]>([]);
   const [activeJob, setActiveJob] = useState<string | null>(null);
+  const [pollAttempt, setPollAttempt] = useState(0);
   const upload = useRef<HTMLInputElement>(null);
   const createVideo = useServerFn(generateGhostVideo), pollVideo = useServerFn(pollGhostVideo);
 
@@ -39,19 +41,29 @@ export function GhostStudio({ userId, onSignIn, initialMode = "image" }: { userI
   useEffect(() => { if (!file) { setReference(""); return; } const src = URL.createObjectURL(file); setReference(src); return () => URL.revokeObjectURL(src); }, [file]);
   useEffect(() => {
     if (!activeJob || !userId) return;
-    let live = true; let timer: ReturnType<typeof setTimeout>;
+    let live = true; let timer: ReturnType<typeof setTimeout>; let failures = 0;
     async function check() {
       try {
         const row = await pollVideo({ data: { id: activeJob ?? "" } });
         if (!live) return;
+        if ("httpStatus" in row) {
+          setNote(row.error); setBusy(false);
+          const delay = videoPollDelay(row.httpStatus, failures++);
+          if (delay !== null) timer = setTimeout(check, delay);
+          return;
+        }
+        failures = 0;
         if (["completed", "failed"].includes(row.status)) {
           setActiveJob(null); setBusy(false); setNote(row.error ?? "Video saved to your library."); await refresh();
         } else { setNote("Your video is generating…"); timer = setTimeout(check, 8000); }
-      } catch (error) { if (live) { setBusy(false); setNote(error instanceof Error ? error.message : "Could not check video progress."); } }
+      } catch (error) { if (live) {
+        setBusy(false); setNote(error instanceof Error ? error.message : "Could not check video progress.");
+        if (error instanceof TypeError) { const delay = videoPollDelay(503, failures++); if (delay !== null) timer = setTimeout(check, delay); }
+      } }
     }
     timer = setTimeout(check, 8000);
     return () => { live = false; clearTimeout(timer); };
-  }, [activeJob, userId]);
+  }, [activeJob, userId, pollAttempt]);
 
   async function saveImage(src: string) {
     if (!userId) return;
@@ -114,7 +126,7 @@ export function GhostStudio({ userId, onSignIn, initialMode = "image" }: { userI
     <p className="studio-credit">Creations use AI credits. Videos include generated sound.</p>
     {note && <p role="status" className="studio-note">{note}</p>}
     {preview && <div className="studio-result"><img src={preview} alt="Your Ghost creation" className={final ? "final" : "partial"}/>{final && <Button variant="outline" onClick={() => void download(preview, "image")}><Download/>Download</Button>}</div>}
-    <div className="studio-library-heading"><h2>Your library</h2>{activeJob && <Button variant="ghost" onClick={() => { setActiveJob(null); requestAnimationFrame(() => setActiveJob(activeJob)); }}>Check video progress</Button>}</div>
+    <div className="studio-library-heading"><h2>Your library</h2>{activeJob && <Button variant="ghost" onClick={() => setPollAttempt(n => n + 1)}>Check video progress</Button>}</div>
     {!items.length ? <div className="studio-empty"><Image size={28}/><p>{userId ? "Your creations will appear here." : "Sign in to create and save images and videos."}</p>{!userId && <Button variant="outline" onClick={onSignIn}>Sign in</Button>}</div> : <div className="studio-library">{items.map(item => <article key={item.id} className="creation-item">
       <div className="creation-media">{item.src ? item.kind === "video" ? <video src={item.src} controls preload="metadata"/> : <img src={item.src} alt={item.prompt}/> : <div className="creation-pending">{item.status === "failed" ? <Film/> : <Loader2 className="animate-spin"/>}<span>{item.error || "Generating video…"}</span></div>}</div>
       <div className="creation-footer"><p title={item.prompt}>{item.prompt}</p><div>{item.src && <><Button size="icon-sm" variant="ghost" title="Download" aria-label="Download creation" onClick={() => void download(item.src ?? "", item.kind)}><Download/></Button>{item.kind === "image" && <Button size="icon-sm" variant="ghost" title="Edit image" aria-label="Edit creation" onClick={() => void editSaved(item)}><Pencil/></Button>}</>}<Button size="icon-sm" variant="ghost" title="Delete" aria-label="Delete creation" disabled={["queued","in_progress"].includes(item.status)} onClick={() => void remove(item)}><Trash2/></Button></div></div>

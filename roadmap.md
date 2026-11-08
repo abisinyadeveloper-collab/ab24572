@@ -1,4 +1,7 @@
 # Roadmap
+- [x] Diagnose video clip limits and fix stalled status checks; verify real video completion
+- [x] Fix music creation and verify saved playback
+- [ ] Clarify the unfinished request “fix the m” (waiting for user)
 - [x] Add Telegram image creation/editing and video jobs with explicit /status collection
 - [x] Add Telegram photo, PDF and common document understanding with clear unsupported-file errors
 - [x] Verify image creation/editing, video delivery and website PDF upload without redesigning the website
