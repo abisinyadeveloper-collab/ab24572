@@ -10,5 +10,9 @@ export const generateGhostVideo = createServerFn({ method: "POST" }).middleware(
 });
 export const pollGhostVideo = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator(z.object({ id: z.string().uuid() })).handler(async ({ data, context }) => {
   const { checkGhostVideo } = await import("./ghost-media.server");
-  return checkGhostVideo(context.userId, data.id);
+  const { VideoGatewayError } = await import("./video-jobs.server");
+  try { return await checkGhostVideo(context.userId, data.id); }
+  catch (error) {
+    return { status: "error", path: null, error: error instanceof Error ? error.message : "Could not check video progress.", httpStatus: error instanceof VideoGatewayError ? error.status : 500 };
+  }
 });
