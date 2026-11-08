@@ -36,6 +36,13 @@
       "when": 1794120885650,
       "tag": "0004_allow_ghost_music_library",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794121068505,
+      "tag": "0005_allow_owner_music_requests",
+      "breakpoints": true
     }
   ]
 }

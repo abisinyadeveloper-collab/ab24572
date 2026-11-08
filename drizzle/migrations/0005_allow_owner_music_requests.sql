@@ -1,0 +1,4 @@
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.ghost_media TO authenticated;
+GRANT ALL ON public.ghost_media TO service_role;
+CREATE POLICY "Owners claim music requests" ON public.ghost_media FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid() AND kind = 'music' AND gateway_id IS NULL AND path IS NULL AND status = 'in_progress');
+CREATE POLICY "Owners finish music requests" ON public.ghost_media FOR UPDATE TO authenticated USING (user_id = auth.uid() AND kind = 'music' AND gateway_id IS NULL) WITH CHECK (user_id = auth.uid() AND kind = 'music' AND gateway_id IS NULL AND (path IS NULL OR path LIKE (auth.uid()::text || '/%')));
