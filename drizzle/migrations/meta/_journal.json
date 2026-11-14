@@ -43,6 +43,13 @@
       "when": 1794121068505,
       "tag": "0005_allow_owner_music_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794639751384,
+      "tag": "0006_owner_only_avatar_reads",
+      "breakpoints": true
     }
   ]
 }
